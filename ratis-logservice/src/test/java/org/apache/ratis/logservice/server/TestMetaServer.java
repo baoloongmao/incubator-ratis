@@ -31,11 +31,7 @@ import org.apache.ratis.metrics.JVMMetrics;
 import org.apache.ratis.server.impl.RaftServerImpl;
 import org.apache.ratis.server.impl.RaftServerProxy;
 import org.apache.ratis.util.TimeDuration;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -112,6 +108,8 @@ public class TestMetaServer {
         assertNotNull(logStream1);
         LogStream logStream2 = client.getLog(LogName.of("testCreateLog"));
         assertNotNull(logStream2);
+        String name = MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name();
+        Assert.assertEquals(getJMXCount(name).longValue(), 2L);
     }
 
     /**
@@ -142,10 +140,12 @@ public class TestMetaServer {
                 cluster.createWorkers(1);
             }
         }
+        String name = MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name();
+        Assert.assertEquals(getJMXCount(name).longValue(), 9L);
     }
 
     @Test
-    public void testReadWritetoLog() throws IOException, InterruptedException {
+    public void testReadWritetoLog() throws Exception {
         LogStream stream = client.createLog(LogName.of("testReadWrite"));
         LogWriter writer = stream.createWriter();
         ByteBuffer testMessage =  ByteBuffer.wrap("Hello world!".getBytes());
@@ -166,10 +166,12 @@ public class TestMetaServer {
         LogReader reader = stream.createReader();
         ByteBuffer res = reader.readNext();
         assert(res.array().length > 0);
+        String name = MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name();
+        Assert.assertEquals(getJMXCount(name).longValue(), 3L);
     }
 
     @Test
-    public void testLogArchival() throws IOException, InterruptedException {
+    public void testLogArchival() throws Exception {
         LogName logName = LogName.of("testArchivalLog");
         LogStream logStream = client.createLog(logName);
         LogWriter writer = logStream.createWriter();
@@ -201,10 +203,15 @@ public class TestMetaServer {
         reader = archiveLogStream.createReader();
         data = reader.readBulk(records.size());
         assertEquals(records.size(), data.size());
+        String name = MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name();
+        Assert.assertEquals(getJMXCount(name).longValue(), 4L);
     }
 
     @Test
-    public void testLogExport() throws IOException, InterruptedException {
+    public void testLogExport() throws Exception {
+        String name = MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name();
+        Assert.assertEquals(getJMXCount(name).longValue(), 0L);
+
         LogName logName = LogName.of("testLogExport");
         LogStream logStream = client.createLog(logName);
         LogWriter writer = logStream.createWriter();
@@ -247,6 +254,8 @@ public class TestMetaServer {
         assertEquals(records.size() - startPosition2, data.size());
         reader.close();
         writer.close();
+        name = MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name();
+        Assert.assertEquals(getJMXCount(name).longValue(), 1L);
     }
 
     boolean deleteLocalDirectory(File dir) {
@@ -279,7 +288,8 @@ public class TestMetaServer {
         } catch(Exception e) {
             assert(e instanceof LogNotFoundException);
         }
-
+        String name = MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name();
+        Assert.assertEquals(getJMXCount(name).longValue(), 12L);
 
     }
     /**
@@ -287,13 +297,15 @@ public class TestMetaServer {
      * @throws IOException
      */
     @Test
-    public void testGetNotExistingLog() {
+    public void testGetNotExistingLog() throws Exception {
         try {
             LogStream log = client.getLog(LogName.of("no_such_log"));
             fail("LogNotFoundException was not thrown");
         } catch (IOException e) {
             assert(e instanceof LogNotFoundException);
         }
+        String name = MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name();
+        Assert.assertEquals(getJMXCount(name).longValue(), 12L);
     }
 
     /**
@@ -310,6 +322,8 @@ public class TestMetaServer {
         } catch (IOException e) {
             assert(e instanceof LogAlreadyExistException);
         }
+        String name = MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name();
+        Assert.assertEquals(getJMXCount(name).longValue(), 11L);
     }
 
     /**
@@ -332,6 +346,9 @@ public class TestMetaServer {
             (long) createCount.get() );
         testJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.LISTLOGS.name(),listCount.longValue());
         assert(list.stream().filter(log -> log.getLogName().getName().startsWith("listLogTest")).count() == 7);
+
+        String name = MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name();
+        Assert.assertEquals(getJMXCount(name).longValue(), 19L);
 
     }
 
@@ -375,6 +392,5 @@ public class TestMetaServer {
         });
         list = client.listLogs();
         assert(list.size() == 0);
-
     }
 }
