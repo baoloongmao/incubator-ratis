@@ -109,6 +109,7 @@ public class ServerState implements Closeable {
         RaftServerConfigKeys.Log.corruptionPolicy(prop));
     snapshotManager = new SnapshotManager(storage, id);
 
+    System.err.println("wangjie tryLock succ thread:" + Thread.currentThread().getId() +  " dir:" + dir + " group:" + group.getGroupId());
     long lastApplied = initStatemachine(stateMachine, group.getGroupId());
 
     // On start the leader is null, start the clock now

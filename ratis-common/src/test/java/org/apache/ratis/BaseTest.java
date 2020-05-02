@@ -137,8 +137,11 @@ public abstract class BaseTest {
       log.info("run '{}'", description);
     }
     try {
+      System.err.println("wangjie testFailureCase begin thead:" + Thread.currentThread().getId());
       testCode.run();
+      System.err.println("wangjie testFailureCase end thread:" + Thread.currentThread().getId());
     } catch (Throwable t) {
+      System.err.println("wangjie testFailureCase exception:" + t + " thread:" + Thread.currentThread().getId());
       assertThrowable(description, t, expectedThrowableClass, log, expectedCauseClasses);
       return t;
     }

@@ -65,6 +65,7 @@ public interface StateMachine extends Closeable {
    */
   LifeCycle.State getLifeCycleState();
 
+  LifeCycle getLifeCycle();
   /**
    * Pauses the state machine. On return, the state machine should have closed all open files so
    * that a new snapshot can be installed.

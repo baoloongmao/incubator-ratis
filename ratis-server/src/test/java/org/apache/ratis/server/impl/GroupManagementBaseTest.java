@@ -118,6 +118,7 @@ public abstract class GroupManagementBaseTest extends BaseTest {
 
   @Test
   public void testMultiGroup9Nodes() throws Exception {
+    System.err.println("wangjie testMultiGroup9Nodes");
     final int[] idIndex = {5, 8, 9};
     runMultiGroupTest(idIndex, 2);
   }

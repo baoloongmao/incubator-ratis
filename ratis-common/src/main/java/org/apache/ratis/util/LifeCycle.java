@@ -112,6 +112,7 @@ public class LifeCycle {
         LOG.trace("TRACE", new Throwable());
       }
 
+      System.err.println("wangjie transition end  thread" + Thread.currentThread().getId() + " validate:" + isValid(from, to));
       Preconditions.assertTrue(isValid(from, to),
           "ILLEGAL TRANSITION: In %s, %s -> %s", name, from, to);
     }
@@ -149,10 +150,32 @@ public class LifeCycle {
     this.name = name;
   }
 
+  public void printCallStatck() {
+    Throwable ex = new Throwable();
+    StackTraceElement[] stackElements = ex.getStackTrace();
+    if (stackElements != null) {
+      for (int i = 0; i < stackElements.length; i++) {
+        System.err.println("wangjie this:" + this.hashCode() + " thread" + Thread.currentThread().getId() + ":"
+                + stackElements[i].getClassName()+ "|"
+                + stackElements[i].getFileName()+"|"
+                + stackElements[i].getLineNumber()+"|"
+                + stackElements[i].getMethodName());
+      }
+    }
+  }
+
+  public void reset() {
+    current.set(State.NEW);
+  }
+
   /** Transition from the current state to the given state. */
   public void transition(final State to) {
     final State from = current.getAndSet(to);
+    System.err.println("wangjie transition start this:" + this.hashCode() + " thread" + Thread.currentThread().getId() + ":" +
+            " LifeCycle:" + this.hashCode() + " from:" + from + " to:" + to);
+    printCallStatck();
     State.validate(name, from, to);
+    System.err.println("wangjie transition end this:" + this.hashCode() + " thread" + Thread.currentThread().getId());
   }
 
   /** Transition from the current state to the given state if the current state is not equal to the given state. */

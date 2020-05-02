@@ -41,6 +41,7 @@ public final class ServerImplUtils {
       RaftProperties properties, Parameters parameters) throws IOException {
     RaftServerProxy.LOG.debug("newRaftServer: {}, {}", id, group);
     final RaftServerProxy proxy = newRaftServer(id, stateMachineRegistry, properties, parameters);
+    System.err.println("wangjie newRaftServer id:" + id + " group:" + group.getGroupId());
     proxy.initGroups(group);
     return proxy;
   }

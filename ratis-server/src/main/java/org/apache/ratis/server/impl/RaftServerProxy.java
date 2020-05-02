@@ -178,7 +178,7 @@ public class RaftServerProxy implements RaftServer {
 
   /** Check the storage dir and add groups*/
   void initGroups(RaftGroup group) {
-
+    System.err.println("wangjie RaftServerProxy initGroups");
     final Optional<RaftGroup> raftGroup = Optional.ofNullable(group);
     final Optional<RaftGroupId> raftGroupId = raftGroup.map(RaftGroup::getGroupId);
 
@@ -191,6 +191,7 @@ public class RaftServerProxy implements RaftServer {
                 LOG.info("{}: found a subdirectory {}", getId(), sub);
                 final RaftGroupId groupId = RaftGroupId.valueOf(UUID.fromString(sub.getName()));
                 if (!raftGroupId.filter(groupId::equals).isPresent()) {
+                  System.err.println("wangjie RaftServerProxy initGroups addGroup:" + groupId);
                   addGroup(RaftGroup.valueOf(groupId));
                 }
               } catch (Throwable t) {
@@ -205,7 +206,10 @@ public class RaftServerProxy implements RaftServer {
     return CompletableFuture.supplyAsync(() -> {
       try {
         serverRpc.addPeers(group.getPeers());
-        return new RaftServerImpl(group, stateMachineRegistry.apply(group.getGroupId()), this);
+        StateMachine stateMachine = stateMachineRegistry.apply(group.getGroupId());
+        System.err.println("wangjie RaftServerProxy: " + this.hashCode() + " lifeCycle:" +
+                stateMachine.getLifeCycle().hashCode() + " group:" + group.getGroupId() + " stateMachine:" + stateMachine.hashCode());
+        return new RaftServerImpl(group, stateMachine, this);
       } catch(IOException e) {
         throw new CompletionException(getId() + ": Failed to initialize server for " + group, e);
       }
@@ -262,6 +266,7 @@ public class RaftServerProxy implements RaftServer {
   }
 
   public CompletableFuture<RaftServerImpl> addGroup(RaftGroup group) {
+    System.err.println("wangjie RaftServerProxy addGroup:" + group.getGroupId());
     return impls.addNew(group);
   }
 
@@ -371,6 +376,7 @@ public class RaftServerProxy implements RaftServer {
   }
 
   private CompletableFuture<RaftClientReply> groupAddAsync(GroupManagementRequest request, RaftGroup newGroup) {
+    System.err.println("wangjie RaftServerProxy groupAddAsync:" + newGroup.getGroupId());
     if (!request.getRaftGroupId().equals(newGroup.getGroupId())) {
       return JavaUtils.completeExceptionally(new GroupMismatchException(
           getId() + ": Request group id (" + request.getRaftGroupId() + ") does not match the new group " + newGroup));

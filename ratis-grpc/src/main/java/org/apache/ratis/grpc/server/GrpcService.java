@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.function.Supplier;
 
 import static org.apache.ratis.thirdparty.io.netty.handler.ssl.SslProvider.OPENSSL;
@@ -160,8 +161,27 @@ public final class GrpcService extends RaftServerRpcWithProxy<GrpcServerProtocol
     LOG.info("{}: {} started, listening on {}", getId(), getClass().getSimpleName(), getInetSocketAddress());
   }
 
+  public boolean telnet(String hostname, int port, int timeout){
+    Socket socket = new Socket();
+    boolean isConnected = false;
+    try {
+      socket.connect(new InetSocketAddress(hostname, port), timeout); // 建立连接
+      isConnected = socket.isConnected(); // 通过现有方法查看连通状态
+    } catch (IOException e) {
+    }finally{
+      try {
+        socket.close();   // 关闭连接
+      } catch (IOException e) {
+        System.out.println("false");
+      }
+    }
+    return isConnected;
+  }
+
   @Override
   public void closeImpl() throws IOException {
+    int port = server.getPort();
+    System.err.println("wangjie begin closeImpl Grpc telnet:" + telnet("127.0.0.1", port, 1000));
     final String name = getId() + ": shutdown server with port " + server.getPort();
     LOG.info("{} now", name);
     final Server s = server.shutdownNow();
@@ -171,6 +191,8 @@ public final class GrpcService extends RaftServerRpcWithProxy<GrpcServerProtocol
     } catch(InterruptedException e) {
       throw IOUtils.toInterruptedIOException(name + " failed", e);
     }
+    System.err.println("wangjie after closeImpl Grpc terminate:" + s.isTerminated() + " shutdown:" + s.isShutdown() +
+            " telnet:" + telnet("127.0.0.1", port, 1000));
     LOG.info("{} successfully", name);
   }
 

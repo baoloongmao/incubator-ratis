@@ -97,6 +97,8 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
     final RaftPeerId id = proxy.getId();
     LOG.info("{}: new RaftServerImpl for {} with {}", id, group, stateMachine);
     this.lifeCycle = new LifeCycle(id);
+    System.err.println("wangjie RaftServerImpl: " + this.hashCode() + " lifeCycle:" +
+            stateMachine.getLifeCycle().hashCode() + " group:" + group.getGroupId());
     this.stateMachine = stateMachine;
     this.role = new RoleInfo(id);
 

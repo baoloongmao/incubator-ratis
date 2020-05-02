@@ -56,10 +56,7 @@ import org.apache.ratis.server.impl.RaftServerTestUtil;
 import org.apache.ratis.server.impl.ServerImplUtils;
 import org.apache.ratis.statemachine.SimpleStateMachine4Testing;
 import org.apache.ratis.statemachine.StateMachine;
-import org.apache.ratis.util.Log4jUtils;
-import org.apache.ratis.util.ProtoUtils;
-import org.apache.ratis.util.SizeInBytes;
-import org.apache.ratis.util.TimeDuration;
+import org.apache.ratis.util.*;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -87,7 +84,9 @@ public class TestRaftServerWithGrpc extends BaseTest implements MiniRaftClusterW
 
   @Test
   public void testServerRestartOnException() throws Exception {
-    runWithNewCluster(1, this::runTestServerRestartOnException);
+    for (int i = 0; i < 1; i ++) {
+      runWithNewCluster(1, this::runTestServerRestartOnException);
+    }
   }
 
   void runTestServerRestartOnException(MiniRaftClusterWithGrpc cluster) throws Exception {
@@ -101,6 +100,8 @@ public class TestRaftServerWithGrpc extends BaseTest implements MiniRaftClusterW
     // compared to leader. This helps in locking the raft storage directory to
     // be used by next raft server proxy instance.
     final StateMachine stateMachine = cluster.getLeader().getStateMachine();
+    System.err.println("wangjie runTestServerRestartOnException stateMachine:" + stateMachine.hashCode() + " lifecycle:"
+            + stateMachine.getLifeCycle().hashCode() + " state:" + stateMachine.getLifeCycleState());
     ServerImplUtils.newRaftServer(leaderId, cluster.getGroup(), gid -> stateMachine, p, null);
     // Close the server rpc for leader so that new raft server can be bound to it.
     cluster.getLeader().getServerRpc().close();
@@ -110,7 +111,9 @@ public class TestRaftServerWithGrpc extends BaseTest implements MiniRaftClusterW
     // the raft server proxy created earlier. Raft server proxy should close
     // the rpc server on failure.
     testFailureCase("start a new server with the same address",
-        () -> ServerImplUtils.newRaftServer(leaderId, cluster.getGroup(), gid -> stateMachine, p, null).start(),
+        () -> {
+           ServerImplUtils.newRaftServer(leaderId, cluster.getGroup(), gid -> stateMachine, p, null).start();
+        },
         IOException.class, OverlappingFileLockException.class);
     // Try to start a raft server rpc at the leader address.
     cluster.getServer(leaderId).getFactory().newRaftServerRpc(cluster.getServer(leaderId));

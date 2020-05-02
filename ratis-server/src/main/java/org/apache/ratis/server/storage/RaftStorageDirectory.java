@@ -334,7 +334,9 @@ public class RaftStorageDirectory {
     String jvmName = ManagementFactory.getRuntimeMXBean().getName();
     FileLock res;
     try {
+      System.err.println("wangjie tryLock begin thread:" + Thread.currentThread().getId() + " " + lockF.getAbsolutePath());
       res = file.getChannel().tryLock();
+      System.err.println("wangjie tryLock end thread:" + Thread.currentThread().getId() + " " + lockF.getAbsolutePath());
       if (null == res) {
         LOG.error("Unable to acquire file lock on path " + lockF.toString());
         throw new OverlappingFileLockException();
