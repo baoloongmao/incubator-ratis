@@ -64,7 +64,6 @@ public class LoadGen extends Client {
     byte[] fileValue = string2Bytes(RandomStringUtils.randomAscii(length));
     FileStoreClient fileStoreClient = new FileStoreClient(client);
 
-    System.out.println("Starting load now ");
     long startTime = System.currentTimeMillis();
     List<CompletableFuture<Long>> futures = new ArrayList<>();
     for (int i = 0; i < num; i++) {
@@ -77,15 +76,9 @@ public class LoadGen extends Client {
       Long writtenLen = future.join();
       totalBytes.addAndGet(writtenLen);
       if (writtenLen != length) {
-        System.out.println("File length written is wrong: " + writtenLen + length);
       }
     }
     long endTime = System.currentTimeMillis();
-
-    System.out.println("Total files written: " + futures.size());
-    System.out.println("Each files size: " + length);
-    System.out.println("Total data written: " + totalBytes + " bytes");
-    System.out.println("Total time taken: " + (endTime - startTime) + " millis");
 
     client.close();
     System.exit(0);

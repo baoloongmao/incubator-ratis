@@ -123,7 +123,6 @@ public class VerificationTool {
           jc.usage();
           return;
         }
-        System.out.println(tool.metaQuorum);
         LogServiceClient client = new LogServiceClient(tool.metaQuorum);
         ExecutorService executor = Executors.newCachedThreadPool();
         List<Future<?>> futures = new ArrayList<Future<?>>(tool.numLogs);
