@@ -51,18 +51,11 @@ public final class ParseRatisLog {
   public void dumpSegmentFile() throws IOException {
     RaftStorageDirectory.LogPathAndIndex pi = RaftStorageDirectory.processOnePath(file.toPath());
     if (pi == null) {
-      System.out.println("Invalid segment file");
       return;
     }
 
-    System.out.println("Processing Raft Log file: " + file.getAbsolutePath() + " size:" + file.length());
     final int entryCount = LogSegment.readSegmentFile(file, pi.getStartIndex(), pi.getEndIndex(), pi.isOpen(),
         RaftServerConfigKeys.Log.CorruptionPolicy.EXCEPTION, null, this::processLogEntry);
-    System.out.println("Num Total Entries: " + entryCount);
-    System.out.println("Num Conf Entries: " + numConfEntries);
-    System.out.println("Num Metadata Entries: " + numMetadataEntries);
-    System.out.println("Num StateMachineEntries Entries: " + numStateMachineEntries);
-    System.out.println("Num Invalid Entries: " + numInvalidEntries);
   }
 
 
@@ -74,12 +67,10 @@ public final class ParseRatisLog {
     } else if (proto.hasStateMachineLogEntry()) {
       numStateMachineEntries++;
     } else {
-      System.out.println("Found invalid entry" + proto.toString());
       numInvalidEntries++;
     }
 
     String str = ServerProtoUtils.toLogEntryString(proto, smLogToString);
-    System.out.println(str);
   }
 
   public static class Builder {

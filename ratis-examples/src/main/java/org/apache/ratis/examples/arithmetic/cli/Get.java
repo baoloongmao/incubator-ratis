@@ -43,6 +43,5 @@ public class Get extends Client {
         client.sendReadOnly(Expression.Utils.toMessage(new Variable(name)));
     Expression response =
         Expression.Utils.bytes2Expression(getValue.getMessage().getContent().toByteArray(), 0);
-    System.out.println(String.format("%s=%s", name, (DoubleValue) response).toString());
   }
 }

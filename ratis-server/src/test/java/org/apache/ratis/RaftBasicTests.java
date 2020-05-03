@@ -489,8 +489,6 @@ public abstract class RaftBasicTests<CLUSTER extends MiniRaftCluster>
           (Long)followerCommitGauge.getValue());
       Gauge followerMetric = RaftServerMetrics
           .getPeerCommitIndexGauge(follower, follower);
-      System.out.println(followerCommitGauge.getValue());
-      System.out.println(followerMetric.getValue());
       Assert.assertTrue((Long)followerCommitGauge.getValue()  <= (Long)followerMetric.getValue());
     }
   }

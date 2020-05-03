@@ -194,20 +194,16 @@ public class TestRaftStorage extends BaseTest {
     final long term = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
     final long index = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
     final String name = SimpleStateMachineStorage.getSnapshotFileName(term, index);
-    System.out.println("name = " + name);
     final File file = new File(storageDir, name);
     final TermIndex ti = SimpleStateMachineStorage.getTermIndexFromSnapshotFile(file);
-    System.out.println("file = " + file);
     Assert.assertEquals(term, ti.getTerm());
     Assert.assertEquals(index, ti.getIndex());
-    System.out.println("ti = " + ti);
 
     final File foo = new File(storageDir, "foo");
     try {
       SimpleStateMachineStorage.getTermIndexFromSnapshotFile(foo);
       Assert.fail();
     } catch(IllegalArgumentException iae) {
-      System.out.println("Good " + iae);
     }
   }
 
@@ -248,7 +244,6 @@ public class TestRaftStorage extends BaseTest {
     Collections.reverse(indices);
     List<Long> remainingIndices = indices.subList(0, 3);
     for (File file : remainingFiles) {
-      System.out.println(file.getName());
       Matcher matcher = SNAPSHOT_REGEX.matcher(file.getName());
       if (matcher.matches()) {
         Assert.assertTrue(remainingIndices.contains(Long.parseLong(matcher.group(2))));

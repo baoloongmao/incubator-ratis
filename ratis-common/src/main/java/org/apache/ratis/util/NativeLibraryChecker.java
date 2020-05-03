@@ -45,7 +45,6 @@ public final class NativeLibraryChecker {
     }
     if (args.length == 1) {
       if (args[0].equals("-h")) {
-        System.out.println(usage);
         return;
       }
     }
@@ -55,9 +54,6 @@ public final class NativeLibraryChecker {
     if (nativeRatisLoaded) {
       raftLibraryName = NativeCodeLoader.getLibraryName();
     }
-
-    System.out.println("Native library checking:");
-    System.out.printf("raft:  %b %s%n", nativeRatisLoaded, raftLibraryName);
 
     if (!nativeRatisLoaded) {
       // return 1 to indicated check failed
