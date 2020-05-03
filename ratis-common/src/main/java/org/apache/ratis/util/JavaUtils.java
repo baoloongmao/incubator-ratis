@@ -206,10 +206,10 @@ public interface JavaUtils {
   }
 
   static void dumpAllThreads(Consumer<String> println) {
-    final ThreadMXBean threadMxBean = ManagementFactory.getThreadMXBean();
-    for (ThreadInfo ti : threadMxBean.dumpAllThreads(true, true)) {
-      println.accept(ti.toString());
-    }
+//    final ThreadMXBean threadMxBean = ManagementFactory.getThreadMXBean();
+//    for (ThreadInfo ti : threadMxBean.dumpAllThreads(true, true)) {
+//      println.accept(ti.toString());
+//    }
   }
 
   static <E> CompletableFuture<E> completeExceptionally(Throwable t) {
