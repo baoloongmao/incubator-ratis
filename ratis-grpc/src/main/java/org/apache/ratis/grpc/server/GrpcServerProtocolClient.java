@@ -20,6 +20,7 @@ package org.apache.ratis.grpc.server;
 import org.apache.ratis.grpc.GrpcTlsConfig;
 import org.apache.ratis.grpc.GrpcUtil;
 import org.apache.ratis.protocol.RaftPeerId;
+import org.apache.ratis.server.RaftServer;
 import org.apache.ratis.thirdparty.io.grpc.ManagedChannel;
 import org.apache.ratis.thirdparty.io.grpc.netty.GrpcSslContexts;
 import org.apache.ratis.thirdparty.io.grpc.netty.NegotiationType;
@@ -50,10 +51,11 @@ public class GrpcServerProtocolClient implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(GrpcServerProtocolClient.class);
   //visible for using in log / error messages AND to use in instrumented tests
   private final RaftPeerId raftPeerId;
-
+  private final RaftPeer target;
   public GrpcServerProtocolClient(RaftPeer target, int flowControlWindow,
       TimeDuration requestTimeoutDuration, GrpcTlsConfig tlsConfig) {
     raftPeerId = target.getId();
+    this.target = target;
     NettyChannelBuilder channelBuilder =
         NettyChannelBuilder.forTarget(target.getAddress());
 

@@ -210,7 +210,7 @@ public interface GrpcUtil {
     if (!managedChannel.isShutdown()) {
       managedChannel.shutdown();
       try {
-        if (!managedChannel.awaitTermination(5, TimeUnit.MILLISECONDS)) {
+        if (!managedChannel.awaitTermination(45, TimeUnit.SECONDS)) {
           LOG.warn("Timed out gracefully shutting down connection: {}. ", managedChannel);
         }
       } catch (InterruptedException e) {
@@ -222,12 +222,16 @@ public interface GrpcUtil {
     if (!managedChannel.isTerminated()) {
       managedChannel.shutdownNow();
       try {
-        if (!managedChannel.awaitTermination(5, TimeUnit.MILLISECONDS)) {
+        if (!managedChannel.awaitTermination(15, TimeUnit.SECONDS)) {
           LOG.warn("Timed out forcefully shutting down connection: {}. ", managedChannel);
         }
       } catch (InterruptedException e) {
         LOG.error("Unexpected exception while waiting for channel termination", e);
       }
+    }
+
+    if (!managedChannel.isTerminated()) {
+      System.err.println("wangjie fail to shutdownManagedChannel");
     }
   }
 }

@@ -91,6 +91,20 @@ public class GrpcClientProtocolClient implements Closeable {
 
   private final AtomicReference<AsyncStreamObservers> unorderedStreamObservers = new AtomicReference<>();
 
+  public void printCallStatck(String str) {
+    Throwable ex = new Throwable();
+    StackTraceElement[] stackElements = ex.getStackTrace();
+    if (stackElements != null) {
+      for (int i = 0; i < stackElements.length; i++) {
+        System.err.println(str + ": "
+                + stackElements[i].getClassName()+ "|"
+                + stackElements[i].getFileName()+"|"
+                + stackElements[i].getLineNumber()+"|"
+                + stackElements[i].getMethodName());
+      }
+    }
+  }
+
   GrpcClientProtocolClient(ClientId id, RaftPeer target, RaftProperties properties, GrpcTlsConfig tlsConf) {
     this.name = JavaUtils.memoize(() -> id + "->" + target.getId());
     this.target = target;
