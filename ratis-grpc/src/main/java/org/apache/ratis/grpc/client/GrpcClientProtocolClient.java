@@ -143,13 +143,7 @@ public class GrpcClientProtocolClient implements Closeable {
   public void close() {
     Optional.ofNullable(orderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
     Optional.ofNullable(unorderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
-    channel.shutdown();
-    try {
-      boolean flag = channel.awaitTermination(5, TimeUnit.SECONDS);
-      System.err.println("wangjie GrpcClientProtocolClient close:" + flag);
-    } catch (Exception e) {
-      LOG.error("Unexpected exception while waiting for channel termination", e);
-    }
+    GrpcUtil.shutdownManagedChannel(channel, LOG);
     scheduler.close();
   }
 

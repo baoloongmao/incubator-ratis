@@ -18,6 +18,7 @@
 package org.apache.ratis.grpc.server;
 
 import org.apache.ratis.grpc.GrpcTlsConfig;
+import org.apache.ratis.grpc.GrpcUtil;
 import org.apache.ratis.protocol.RaftPeerId;
 import org.apache.ratis.thirdparty.io.grpc.ManagedChannel;
 import org.apache.ratis.thirdparty.io.grpc.netty.GrpcSslContexts;
@@ -89,12 +90,7 @@ public class GrpcServerProtocolClient implements Closeable {
 
   @Override
   public void close() {
-    channel.shutdown();
-    try {
-      channel.awaitTermination(5, TimeUnit.SECONDS);
-    } catch (Exception e) {
-      LOG.error("Unexpected exception while waiting for channel termination, peerId={}", raftPeerId, e);
-    }
+    GrpcUtil.shutdownManagedChannel(channel, LOG);
   }
 
   public RequestVoteReplyProto requestVote(RequestVoteRequestProto request) {
