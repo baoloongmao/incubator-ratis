@@ -20,6 +20,7 @@ package org.apache.ratis.grpc;
 import org.apache.ratis.protocol.RaftClientReply;
 import org.apache.ratis.protocol.ServerNotReadyException;
 import org.apache.ratis.protocol.TimeoutIOException;
+import org.apache.ratis.thirdparty.io.grpc.ManagedChannel;
 import org.apache.ratis.thirdparty.io.grpc.Metadata;
 import org.apache.ratis.thirdparty.io.grpc.Status;
 import org.apache.ratis.thirdparty.io.grpc.StatusRuntimeException;
@@ -33,6 +34,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -196,6 +198,36 @@ public interface GrpcUtil {
 
     Metadata build() {
       return trailers;
+    }
+  }
+
+  /**
+   * Tries to gracefully shut down the managed channel. Falls back to forceful shutdown if
+   * graceful shutdown times out.
+   */
+  static void shutdownManagedChannel(ManagedChannel managedChannel, Logger LOG) {
+    // Close the gRPC managed-channel if not shut down already.
+    if (!managedChannel.isShutdown()) {
+      try {
+        managedChannel.shutdown();
+        if (!managedChannel.awaitTermination(45, TimeUnit.SECONDS)) {
+          LOG.warn("Timed out gracefully shutting down connection: {}. ", managedChannel);
+        }
+      } catch (Exception e) {
+        LOG.error("Unexpected exception while waiting for channel termination", e);
+      }
+    }
+
+    // Forceful shut down if still not terminated.
+    if (!managedChannel.isTerminated()) {
+      try {
+        managedChannel.shutdownNow();
+        if (!managedChannel.awaitTermination(15, TimeUnit.SECONDS)) {
+          LOG.warn("Timed out forcefully shutting down connection: {}. ", managedChannel);
+        }
+      } catch (Exception e) {
+        LOG.error("Unexpected exception while waiting for channel termination", e);
+      }
     }
   }
 }
