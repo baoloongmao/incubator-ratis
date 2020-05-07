@@ -106,6 +106,8 @@ public class GrpcClientProtocolClient implements Closeable {
   }
 
   GrpcClientProtocolClient(ClientId id, RaftPeer target, RaftProperties properties, GrpcTlsConfig tlsConf) {
+    printCallStatck("wangjie grpc create client:" + this.hashCode() + " port:" + target.getAddress() + " " +
+            " thread:" + Thread.currentThread().getId());
     this.name = JavaUtils.memoize(() -> id + "->" + target.getId());
     this.target = target;
     final SizeInBytes flowControlWindow = GrpcConfigKeys.flowControlWindow(properties, LOG::debug);
@@ -147,7 +149,6 @@ public class GrpcClientProtocolClient implements Closeable {
     this.requestTimeoutDuration = RaftClientConfigKeys.Rpc.requestTimeout(properties);
     this.watchRequestTimeoutDuration =
         RaftClientConfigKeys.Rpc.watchRequestTimeout(properties);
-    printCallStatck("wangjie grpc create client:" + this.hashCode() + " port:" + target.getAddress());
   }
 
   String getName() {
@@ -160,7 +161,7 @@ public class GrpcClientProtocolClient implements Closeable {
     Optional.ofNullable(unorderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
     GrpcUtil.shutdownManagedChannel(channel, LOG);
     printCallStatck("wangjie grpc close client:" + this.hashCode() + " port:" + target.getAddress() +
-            " shutdown:" + channel.isShutdown() + " terminated:" + channel.isTerminated());
+            " shutdown:" + channel.isShutdown() + " terminated:" + channel.isTerminated() + " thread:" + Thread.currentThread().getId());
     scheduler.close();
   }
 
