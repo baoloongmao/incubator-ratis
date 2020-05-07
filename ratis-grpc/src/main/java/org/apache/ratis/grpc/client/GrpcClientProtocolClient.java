@@ -91,6 +91,20 @@ public class GrpcClientProtocolClient implements Closeable {
 
   private final AtomicReference<AsyncStreamObservers> unorderedStreamObservers = new AtomicReference<>();
 
+  public void printCallStatck(String str) {
+    Throwable ex = new Throwable();
+    StackTraceElement[] stackElements = ex.getStackTrace();
+    if (stackElements != null) {
+      for (int i = 0; i < stackElements.length; i++) {
+        System.err.println(str + ": "
+                + stackElements[i].getClassName()+ "|"
+                + stackElements[i].getFileName()+"|"
+                + stackElements[i].getLineNumber()+"|"
+                + stackElements[i].getMethodName());
+      }
+    }
+  }
+
   GrpcClientProtocolClient(ClientId id, RaftPeer target, RaftProperties properties, GrpcTlsConfig tlsConf) {
     this.name = JavaUtils.memoize(() -> id + "->" + target.getId());
     this.target = target;
@@ -133,7 +147,7 @@ public class GrpcClientProtocolClient implements Closeable {
     this.requestTimeoutDuration = RaftClientConfigKeys.Rpc.requestTimeout(properties);
     this.watchRequestTimeoutDuration =
         RaftClientConfigKeys.Rpc.watchRequestTimeout(properties);
-    System.err.println("wangjie grpc create client:" + this.hashCode() + " port:" + target.getAddress());
+    printCallStatck("wangjie grpc create client:" + this.hashCode() + " port:" + target.getAddress());
   }
 
   String getName() {
@@ -145,7 +159,7 @@ public class GrpcClientProtocolClient implements Closeable {
     Optional.ofNullable(orderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
     Optional.ofNullable(unorderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
     GrpcUtil.shutdownManagedChannel(channel, LOG);
-    System.err.println("wangjie grpc close client:" + this.hashCode() + " port:" + target.getAddress() +
+    printCallStatck("wangjie grpc close client:" + this.hashCode() + " port:" + target.getAddress() +
             " shutdown:" + channel.isShutdown() + " terminated:" + channel.isTerminated());
     scheduler.close();
   }
