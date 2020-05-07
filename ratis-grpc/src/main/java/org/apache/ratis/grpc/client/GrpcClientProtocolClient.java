@@ -133,6 +133,7 @@ public class GrpcClientProtocolClient implements Closeable {
     this.requestTimeoutDuration = RaftClientConfigKeys.Rpc.requestTimeout(properties);
     this.watchRequestTimeoutDuration =
         RaftClientConfigKeys.Rpc.watchRequestTimeout(properties);
+    System.err.println("wangjie grpc create client:" + this.hashCode());
   }
 
   String getName() {
@@ -144,6 +145,7 @@ public class GrpcClientProtocolClient implements Closeable {
     Optional.ofNullable(orderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
     Optional.ofNullable(unorderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
     GrpcUtil.shutdownManagedChannel(channel, LOG);
+    System.err.println("wangjie grpc close client:" + this.hashCode());
     scheduler.close();
   }
 

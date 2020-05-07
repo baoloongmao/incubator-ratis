@@ -86,11 +86,13 @@ public class GrpcServerProtocolClient implements Closeable {
     blockingStub = RaftServerProtocolServiceGrpc.newBlockingStub(channel);
     asyncStub = RaftServerProtocolServiceGrpc.newStub(channel);
     this.requestTimeoutDuration = requestTimeoutDuration;
+    System.err.println("wangjie grpc create server:" + this.hashCode());
   }
 
   @Override
   public void close() {
     GrpcUtil.shutdownManagedChannel(channel, LOG);
+    System.err.println("wangjie grpc close server:" + this.hashCode());
   }
 
   public RequestVoteReplyProto requestVote(RequestVoteRequestProto request) {
