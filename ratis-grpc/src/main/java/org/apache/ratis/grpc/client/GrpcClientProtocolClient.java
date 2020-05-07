@@ -157,8 +157,12 @@ public class GrpcClientProtocolClient implements Closeable {
 
   @Override
   public void close() {
-    Optional.ofNullable(orderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
-    Optional.ofNullable(unorderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
+      try {
+          Optional.ofNullable(orderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
+          Optional.ofNullable(unorderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
+      } catch (Exception e) {
+        System.err.println("wangjie close GrpcClient exception:" + e);
+      }
     GrpcUtil.shutdownManagedChannel(channel, LOG);
 //    printCallStatck("wangjie grpc close client:" + this.hashCode() + " port:" + target.getAddress() +
 //            " shutdown:" + channel.isShutdown() + " terminated:" + channel.isTerminated() + " thread:" + Thread.currentThread().getId());
