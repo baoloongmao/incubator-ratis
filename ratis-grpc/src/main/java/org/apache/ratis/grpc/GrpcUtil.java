@@ -208,24 +208,24 @@ public interface GrpcUtil {
   static void shutdownManagedChannel(ManagedChannel managedChannel, Logger LOG) {
     // Close the gRPC managed-channel if not shut down already.
     if (!managedChannel.isShutdown()) {
-      managedChannel.shutdown();
       try {
+        managedChannel.shutdown();
         if (!managedChannel.awaitTermination(45, TimeUnit.SECONDS)) {
           LOG.warn("Timed out gracefully shutting down connection: {}. ", managedChannel);
         }
-      } catch (InterruptedException e) {
+      } catch (Exception e) {
         LOG.error("Unexpected exception while waiting for channel termination", e);
       }
     }
 
     // Forceful shut down if still not terminated.
     if (!managedChannel.isTerminated()) {
-      managedChannel.shutdownNow();
       try {
+        managedChannel.shutdownNow();
         if (!managedChannel.awaitTermination(15, TimeUnit.SECONDS)) {
           LOG.warn("Timed out forcefully shutting down connection: {}. ", managedChannel);
         }
-      } catch (InterruptedException e) {
+      } catch (Exception e) {
         LOG.error("Unexpected exception while waiting for channel termination", e);
       }
     }
