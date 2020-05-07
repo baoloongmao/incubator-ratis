@@ -315,15 +315,23 @@ public class TestMetaServer {
      */
     @Test
     public void testAlreadyExistLog() throws Exception {
+        System.err.println("wangjie testAlreadyExistLog 1 createCount:" + createCount.get() + " jmx:" +
+                getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name()));
         LogStream logStream1 = client.createLog(LogName.of("test1"));
+        System.err.println("wangjie testAlreadyExistLog 2 createCount:" + createCount.get() + " jmx:" +
+                getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name()));
         assertNotNull(logStream1);
         try {
             logStream1 = client.createLog(LogName.of("test1"));
+            System.err.println("wangjie testAlreadyExistLog 3 createCount:" + createCount.get() + " jmx:" +
+                    getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name()));
             fail("Didn't fail with LogAlreadyExistException");
         } catch (IOException e) {
             assert(e instanceof LogAlreadyExistException);
+            System.err.println("wangjie testAlreadyExistLog 4 createCount:" + createCount.get() + " jmx:" +
+                    getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name()));
         }
-        System.err.println("wangjie testAlreadyExistLog createCount:" + createCount.get() + " jmx:" +
+        System.err.println("wangjie testAlreadyExistLog 5 createCount:" + createCount.get() + " jmx:" +
                 getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name()));
     }
 
