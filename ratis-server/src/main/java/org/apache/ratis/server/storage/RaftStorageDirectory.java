@@ -50,6 +50,7 @@ public class RaftStorageDirectory {
   static final String LOG_FILE_PREFIX = "log";
   static final String STATE_MACHINE = "sm"; // directory containing state machine snapshots
   static final String TEMP = "tmp";
+  static final String REMOVED_GROUP = "removed-group";
   static final Pattern CLOSED_SEGMENT_REGEX = Pattern.compile("log_(\\d+)-(\\d+)");
   static final Pattern OPEN_SEGMENT_REGEX = Pattern.compile("log_inprogress_(\\d+)(?:\\..*)?");
   private static final String CONF_EXTENSION = ".conf";
@@ -128,6 +129,7 @@ public class RaftStorageDirectory {
   void clearDirectory() throws IOException {
     clearDirectory(getCurrentDir());
     clearDirectory(getStateMachineDir());
+    clearDirectory(getRemovedGroupDir());
   }
 
   private static void clearDirectory(File dir) throws IOException {
@@ -179,6 +181,14 @@ public class RaftStorageDirectory {
 
   public File getStateMachineDir() {
     return new File(getRoot(), STATE_MACHINE);
+  }
+
+  public File getRemovedGroupDir() {
+    return new File(getRoot().getParent(), REMOVED_GROUP);
+  }
+
+  public File getNewRemovedGroupFile(String removedGroupName) {
+    return new File(getRemovedGroupDir(), removedGroupName);
   }
 
   /** Returns a uniquely named temporary directory under $rootdir/tmp/ */

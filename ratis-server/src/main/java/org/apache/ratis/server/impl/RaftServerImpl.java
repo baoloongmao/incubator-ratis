@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.management.ObjectName;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -274,18 +275,37 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
       } catch (Exception ignored) {
         LOG.warn("{}: Failed to close state", getMemberId(), ignored);
       }
-      leaderElectionMetrics.unregister();
-      raftServerMetrics.unregister();
-      RaftServerMetrics.removeRaftServerMetrics(this);
-      if (deleteDirectory) {
-        final RaftStorageDirectory dir = state.getStorage().getStorageDir();
-        try {
-          FileUtils.deleteFully(dir.getRoot());
-        } catch(Exception ignored) {
-          LOG.warn("{}: Failed to remove RaftStorageDirectory {}", getMemberId(), dir, ignored);
-        }
+
+      try {
+        leaderElectionMetrics.unregister();
+        raftServerMetrics.unregister();
+        RaftServerMetrics.removeRaftServerMetrics(this);
+      } catch (Exception ignored) {
+        LOG.warn("{}: Failed to unregister metrics", getMemberId(), ignored);
       }
+
+      deleteOrMoveStorageDir(deleteDirectory);
     });
+  }
+
+  private void deleteOrMoveStorageDir(boolean deleteDirectory) {
+    final RaftStorageDirectory dir = state.getStorage().getStorageDir();
+    if (deleteDirectory) {
+      try {
+        FileUtils.deleteFully(dir.getRoot());
+        LOG.info("{}: Succeed to remove RaftStorageDirectory {}", getMemberId(), dir);
+       } catch(Exception ignored) {
+        LOG.warn("{}: Failed to remove RaftStorageDirectory {}", getMemberId(), dir, ignored);
+       }
+    } else {
+      File destFile = dir.getNewRemovedGroupFile(dir.getRoot().getName());
+      try {
+        FileUtils.move(dir.getRoot(), destFile);
+        LOG.info("{}: Succeed to move RaftStorageDirectory {} to {}", getMemberId(), dir, destFile);
+      } catch (Exception ignored) {
+        LOG.warn("{}: Failed to move RaftStorageDirectory {} to {}", getMemberId(), dir, destFile, ignored);
+      }
+    }
   }
 
   public boolean isAlive() {
