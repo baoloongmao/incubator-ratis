@@ -38,12 +38,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This is a RaftClient implementation that supports streaming data to the raft
  * ring. The stream implementation utilizes gRPC.
  */
 public class GrpcServerProtocolClient implements Closeable {
+  private static AtomicInteger serverCount = new AtomicInteger();
   private final ManagedChannel channel;
   private final TimeDuration requestTimeoutDuration;
   private final RaftServerProtocolServiceBlockingStub blockingStub;
@@ -54,6 +56,8 @@ public class GrpcServerProtocolClient implements Closeable {
   private final RaftPeer target;
   public GrpcServerProtocolClient(RaftPeer target, int flowControlWindow,
       TimeDuration requestTimeoutDuration, GrpcTlsConfig tlsConfig) {
+    System.err.println("wangjie grpc create server:" + this.hashCode() + " port:" + target.getAddress() +
+            " serverCount:" + serverCount.get());
     raftPeerId = target.getId();
     this.target = target;
     NettyChannelBuilder channelBuilder =
@@ -85,15 +89,16 @@ public class GrpcServerProtocolClient implements Closeable {
       channelBuilder.negotiationType(NegotiationType.PLAINTEXT);
     }
     channel = channelBuilder.flowControlWindow(flowControlWindow).build();
+    serverCount.incrementAndGet();
     blockingStub = RaftServerProtocolServiceGrpc.newBlockingStub(channel);
     asyncStub = RaftServerProtocolServiceGrpc.newStub(channel);
     this.requestTimeoutDuration = requestTimeoutDuration;
-    //System.err.println("wangjie grpc create server:" + this.hashCode() + " port:" + target.getAddress());
   }
 
   @Override
   public void close() {
     GrpcUtil.shutdownManagedChannel(channel, LOG);
+    serverCount.decrementAndGet();
 //    System.err.println("wangjie grpc close server:" + this.hashCode() + " port:" + target.getAddress() +
 //            " shutdown:" + channel.isShutdown() + " terminated:" + channel.isTerminated());
   }

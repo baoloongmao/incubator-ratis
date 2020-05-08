@@ -67,6 +67,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -74,7 +75,7 @@ import java.util.function.Supplier;
 
 public class GrpcClientProtocolClient implements Closeable {
   public static final Logger LOG = LoggerFactory.getLogger(GrpcClientProtocolClient.class);
-
+  private static AtomicInteger clientCount = new AtomicInteger();
   private final Supplier<String> name;
   private final RaftPeer target;
   private final ManagedChannel channel;
@@ -106,8 +107,8 @@ public class GrpcClientProtocolClient implements Closeable {
   }
 
   GrpcClientProtocolClient(ClientId id, RaftPeer target, RaftProperties properties, GrpcTlsConfig tlsConf) {
-//    printCallStatck("wangjie grpc create client:" + this.hashCode() + " port:" + target.getAddress() + " " +
-//            " thread:" + Thread.currentThread().getId());
+    printCallStatck("wangjie grpc create client:" + this.hashCode() + " port:" + target.getAddress() + " " +
+            " thread:" + Thread.currentThread().getId() + " clientCount:" + clientCount.get());
     this.name = JavaUtils.memoize(() -> id + "->" + target.getId());
     this.target = target;
     final SizeInBytes flowControlWindow = GrpcConfigKeys.flowControlWindow(properties, LOG::debug);
@@ -143,6 +144,7 @@ public class GrpcClientProtocolClient implements Closeable {
     channel = channelBuilder.flowControlWindow(flowControlWindow.getSizeInt())
         .maxInboundMessageSize(maxMessageSize.getSizeInt())
         .build();
+    clientCount.incrementAndGet();
     blockingStub = RaftClientProtocolServiceGrpc.newBlockingStub(channel);
     asyncStub = RaftClientProtocolServiceGrpc.newStub(channel);
     adminBlockingStub = AdminProtocolServiceGrpc.newBlockingStub(channel);
@@ -164,6 +166,7 @@ public class GrpcClientProtocolClient implements Closeable {
         System.err.println("wangjie close GrpcClient exception:" + e);
       }
     GrpcUtil.shutdownManagedChannel(channel, LOG);
+    clientCount.decrementAndGet();
 //    printCallStatck("wangjie grpc close client:" + this.hashCode() + " port:" + target.getAddress() +
 //            " shutdown:" + channel.isShutdown() + " terminated:" + channel.isTerminated() + " thread:" + Thread.currentThread().getId());
     scheduler.close();

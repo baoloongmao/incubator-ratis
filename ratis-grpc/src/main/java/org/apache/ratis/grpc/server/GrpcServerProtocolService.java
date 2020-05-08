@@ -146,8 +146,6 @@ class GrpcServerProtocolService extends RaftServerProtocolServiceImplBase {
         Status status = Status.fromThrowable(t);
         if (status != null && status.getCode() != Status.Code.CANCELLED) {
           responseObserver.onCompleted();
-        } else if (status != null){
-          System.err.println("wangjie status.getCode:" + status.getCode());
         }
       }
     }
