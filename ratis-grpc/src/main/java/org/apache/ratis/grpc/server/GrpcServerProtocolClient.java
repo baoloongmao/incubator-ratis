@@ -56,8 +56,6 @@ public class GrpcServerProtocolClient implements Closeable {
   private final RaftPeer target;
   public GrpcServerProtocolClient(RaftPeer target, int flowControlWindow,
       TimeDuration requestTimeoutDuration, GrpcTlsConfig tlsConfig) {
-    System.out.println("grpc create server this:" + this.hashCode() + " addr:" + target.getAddress() +
-      " server channel count:" + serverChannelCount.get());
     raftPeerId = target.getId();
     this.target = target;
     NettyChannelBuilder channelBuilder =
@@ -99,9 +97,6 @@ public class GrpcServerProtocolClient implements Closeable {
   public void close() {
     GrpcUtil.shutdownManagedChannel(channel, LOG);
     serverChannelCount.decrementAndGet();
-    System.out.println("grpc close server this:" + this.hashCode() + " addr:" + target.getAddress() +
-      " shutdown:" + channel.isShutdown() + " terminated:" + channel.isTerminated() +
-      " server channel count:" + serverChannelCount.get());
   }
 
   public RequestVoteReplyProto requestVote(RequestVoteRequestProto request) {

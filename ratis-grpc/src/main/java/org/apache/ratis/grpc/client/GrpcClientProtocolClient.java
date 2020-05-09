@@ -93,8 +93,6 @@ public class GrpcClientProtocolClient implements Closeable {
   private final AtomicReference<AsyncStreamObservers> unorderedStreamObservers = new AtomicReference<>();
 
   GrpcClientProtocolClient(ClientId id, RaftPeer target, RaftProperties properties, GrpcTlsConfig tlsConf) {
-    System.out.println("grpc create client this:" + this.hashCode() + " addr:" + target.getAddress() +
-      " client channel count:" + clientChannelCount.get());
     this.name = JavaUtils.memoize(() -> id + "->" + target.getId());
     this.target = target;
     final SizeInBytes flowControlWindow = GrpcConfigKeys.flowControlWindow(properties, LOG::debug);
@@ -153,9 +151,6 @@ public class GrpcClientProtocolClient implements Closeable {
     }
     GrpcUtil.shutdownManagedChannel(channel, LOG);
     clientChannelCount.decrementAndGet();
-    System.out.println("grpc close client this:" + this.hashCode() + " addr:" + target.getAddress() +
-      " shutdown:" + channel.isShutdown() + " terminated:" + channel.isTerminated() +
-      " client channel count:" + clientChannelCount.get());
     scheduler.close();
   }
 
