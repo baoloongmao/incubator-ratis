@@ -78,7 +78,7 @@ public class TestMetaServer {
 
         @Override public LogStream createLog(LogName logName) throws IOException {
             createCount.incrementAndGet();
-            printCallStatck("wangjie create log in test:" + createCount.get());
+            printCallStatck("wangjie create log in test:" + createCount.get() + " logName:" + logName.getName());
             return super.createLog(logName);
         }
 

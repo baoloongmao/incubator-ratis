@@ -202,6 +202,7 @@ public class MetaStateMachine extends BaseStateMachine {
     public CompletableFuture<Message> query(Message request) {
         Timer.Context timerContext = null;
         MetaServiceProtos.MetaServiceRequestProto.TypeCase type = null;
+        MetaServiceProtos.MetaServiceRequestProto req = null;
         try {
             if (currentGroup == null) {
                 try {
@@ -215,8 +216,7 @@ public class MetaStateMachine extends BaseStateMachine {
                     e.printStackTrace();
                 }
             }
-
-            MetaServiceProtos.MetaServiceRequestProto req = null;
+            
             try {
                 req = MetaServiceProtos.MetaServiceRequestProto.parseFrom(request.getContent());
             } catch (InvalidProtocolBufferException e) {
@@ -224,8 +224,10 @@ public class MetaStateMachine extends BaseStateMachine {
             }
             type = req.getTypeCase();
             if (type == CREATELOG) {
+                CreateLogRequestProto createLog = req.getCreateLog();
+                LogName name = LogServiceProtoUtil.toLogName(createLog.getLogName());
                 System.err.println("wangjie create log before:" + metricRegistry.timer(type.name()).getCount() +
-                  " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
+                  " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " name:" + name.getName());
             }
             timerContext = metricRegistry.timer(type.name()).time();
             switch (type) {
@@ -244,14 +246,18 @@ public class MetaStateMachine extends BaseStateMachine {
             return reply;
         }finally{
             if (timerContext != null) {
-              if (type == CREATELOG) {
-                System.err.println("wangjie create log middle:" + metricRegistry.timer(type.name()).getCount() +
-                  " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
-              }
+                if (type == CREATELOG) {
+                    CreateLogRequestProto createLog = req.getCreateLog();
+                    LogName name = LogServiceProtoUtil.toLogName(createLog.getLogName());
+                    System.err.println("wangjie create log middle:" + metricRegistry.timer(type.name()).getCount() +
+                            " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " name:" + name.getName());
+                }
                 timerContext.stop();
                 if (type == CREATELOG) {
+                    CreateLogRequestProto createLog = req.getCreateLog();
+                    LogName name = LogServiceProtoUtil.toLogName(createLog.getLogName());
                     System.err.println("wangjie create log after:" + metricRegistry.timer(type.name()).getCount() +
-                            " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
+                            " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " name:" + name.getName());
                 }
             }
         }
