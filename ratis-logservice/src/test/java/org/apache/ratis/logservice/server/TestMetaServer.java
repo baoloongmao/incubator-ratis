@@ -62,9 +62,23 @@ public class TestMetaServer {
     static AtomicInteger deleteCount = new AtomicInteger();
     static AtomicInteger listCount = new AtomicInteger();
     LogServiceClient client = new LogServiceClient(cluster.getMetaIdentity()){
+        public void printCallStatck(String str) {
+            Throwable ex = new Throwable();
+            StackTraceElement[] stackElements = ex.getStackTrace();
+            if (stackElements != null) {
+                for (int i = 0; i < stackElements.length; i++) {
+                    System.err.println(str + ": "
+                            + stackElements[i].getClassName()+ "|"
+                            + stackElements[i].getFileName()+"|"
+                            + stackElements[i].getLineNumber()+"|"
+                            + stackElements[i].getMethodName());
+                }
+            }
+        }
+
         @Override public LogStream createLog(LogName logName) throws IOException {
             createCount.incrementAndGet();
-            System.err.println("wangjie create log in test:" + createCount.get());
+            printCallStatck("wangjie create log in test:" + createCount.get());
             return super.createLog(logName);
         }
 
