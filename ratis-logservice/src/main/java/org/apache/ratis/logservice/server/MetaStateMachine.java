@@ -64,6 +64,8 @@ import org.apache.ratis.util.Daemon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.apache.ratis.logservice.proto.MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG;
+
 /**
  * State Machine serving meta data for LogService. It persists the pairs 'log name' -> RaftGroup
  * During the start basing on the persisted data it would be able to build a list of the existing servers.
@@ -221,6 +223,10 @@ public class MetaStateMachine extends BaseStateMachine {
                 e.printStackTrace();
             }
             type = req.getTypeCase();
+            if (type == CREATELOG) {
+                System.err.println("wangjie create log before:" + metricRegistry.timer(type.name()).getCount() +
+                  " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
+            }
             timerContext = metricRegistry.timer(type.name()).time();
             switch (type) {
 
@@ -238,7 +244,15 @@ public class MetaStateMachine extends BaseStateMachine {
             return reply;
         }finally{
             if (timerContext != null) {
+              if (type == CREATELOG) {
+                System.err.println("wangjie create log middle:" + metricRegistry.timer(type.name()).getCount() +
+                  " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
+              }
                 timerContext.stop();
+                if (type == CREATELOG) {
+                    System.err.println("wangjie create log after:" + metricRegistry.timer(type.name()).getCount() +
+                            " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
+                }
             }
         }
     }

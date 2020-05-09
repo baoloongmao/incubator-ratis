@@ -64,6 +64,7 @@ public class TestMetaServer {
     LogServiceClient client = new LogServiceClient(cluster.getMetaIdentity()){
         @Override public LogStream createLog(LogName logName) throws IOException {
             createCount.incrementAndGet();
+            System.err.println("wangjie create log in test:" + createCount.get());
             return super.createLog(logName);
         }
 
@@ -112,6 +113,8 @@ public class TestMetaServer {
         assertNotNull(logStream1);
         LogStream logStream2 = client.getLog(LogName.of("testCreateLog"));
         assertNotNull(logStream2);
+        System.err.println("wangjie create log testCreateAndGetLog createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name()));
     }
 
     /**
@@ -142,6 +145,8 @@ public class TestMetaServer {
                 cluster.createWorkers(1);
             }
         }
+        System.err.println("wangjie create log testCloseLogOnNodeFailure createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name()));
     }
 
     @Test
@@ -166,6 +171,8 @@ public class TestMetaServer {
         LogReader reader = stream.createReader();
         ByteBuffer res = reader.readNext();
         assert(res.array().length > 0);
+        System.err.println("wangjie create log testReadWritetoLog createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name()));
     }
 
     @Test
@@ -201,6 +208,8 @@ public class TestMetaServer {
         reader = archiveLogStream.createReader();
         data = reader.readBulk(records.size());
         assertEquals(records.size(), data.size());
+        System.err.println("wangjie create log testLogArchival createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name()));
     }
 
     @Test
@@ -247,6 +256,8 @@ public class TestMetaServer {
         assertEquals(records.size() - startPosition2, data.size());
         reader.close();
         writer.close();
+        System.err.println("wangjie create log testLogExport createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name()));
     }
 
     boolean deleteLocalDirectory(File dir) {
@@ -279,6 +290,8 @@ public class TestMetaServer {
         } catch(Exception e) {
             assert(e instanceof LogNotFoundException);
         }
+        System.err.println("wangjie create log testDeleteLog createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name()));
     }
     /**
      * Test for getting not existing log. Should throw an exception
@@ -292,6 +305,8 @@ public class TestMetaServer {
         } catch (IOException e) {
             assert(e instanceof LogNotFoundException);
         }
+        System.err.println("wangjie create log testGetNotExistingLog createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name()));
     }
 
     /**
@@ -308,6 +323,8 @@ public class TestMetaServer {
         } catch (IOException e) {
             assert(e instanceof LogAlreadyExistException);
         }
+        System.err.println("wangjie create log testAlreadyExistLog createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name()));
     }
 
     /**
@@ -330,7 +347,8 @@ public class TestMetaServer {
             (long) createCount.get() );
         testJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.LISTLOGS.name(),listCount.longValue());
         assert(list.stream().filter(log -> log.getLogName().getName().startsWith("listLogTest")).count() == 7);
-
+       System.err.println("wangjie create log testListLogs createCount:" + createCount.get() +
+         " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name()));
     }
 
     private void testJMXCount(String metricName, Long expectedCount) throws Exception {
@@ -373,5 +391,7 @@ public class TestMetaServer {
         });
         list = client.listLogs();
         assert(list.size() == 0);
+        System.err.println("wangjie create log testFinalClieanUp createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name()));
     }
 }
