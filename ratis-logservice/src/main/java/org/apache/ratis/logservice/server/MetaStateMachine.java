@@ -198,6 +198,20 @@ public class MetaStateMachine extends BaseStateMachine {
         return super.applyTransaction(trx);
     }
 
+    public void printCallStatck(String str) {
+        Throwable ex = new Throwable();
+        StackTraceElement[] stackElements = ex.getStackTrace();
+        if (stackElements != null) {
+            for (int i = 0; i < stackElements.length; i++) {
+                System.err.println(str + ": "
+                        + stackElements[i].getClassName()+ "|"
+                        + stackElements[i].getFileName()+"|"
+                        + stackElements[i].getLineNumber()+"|"
+                        + stackElements[i].getMethodName());
+            }
+        }
+    }
+
     @Override
     public CompletableFuture<Message> query(Message request) {
         Timer.Context timerContext = null;
@@ -216,7 +230,7 @@ public class MetaStateMachine extends BaseStateMachine {
                     e.printStackTrace();
                 }
             }
-            
+
             try {
                 req = MetaServiceProtos.MetaServiceRequestProto.parseFrom(request.getContent());
             } catch (InvalidProtocolBufferException e) {
@@ -226,8 +240,9 @@ public class MetaStateMachine extends BaseStateMachine {
             if (type == CREATELOG) {
                 CreateLogRequestProto createLog = req.getCreateLog();
                 LogName name = LogServiceProtoUtil.toLogName(createLog.getLogName());
-                System.err.println("wangjie create log before:" + metricRegistry.timer(type.name()).getCount() +
-                  " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " name:" + name.getName());
+                printCallStatck("wangjie create log before:" + metricRegistry.timer(type.name()).getCount() +
+                  " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " name:" + name.getName() +
+                  " type:" + type);
             }
             timerContext = metricRegistry.timer(type.name()).time();
             switch (type) {
@@ -250,7 +265,8 @@ public class MetaStateMachine extends BaseStateMachine {
                     CreateLogRequestProto createLog = req.getCreateLog();
                     LogName name = LogServiceProtoUtil.toLogName(createLog.getLogName());
                     System.err.println("wangjie create log middle:" + metricRegistry.timer(type.name()).getCount() +
-                            " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " name:" + name.getName());
+                            " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " name:" + name.getName() +
+                            " type:" + type);
                 }
                 timerContext.stop();
                 if (type == CREATELOG) {
