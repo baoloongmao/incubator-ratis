@@ -75,7 +75,7 @@ import java.util.function.Supplier;
 
 public class GrpcClientProtocolClient implements Closeable {
   public static final Logger LOG = LoggerFactory.getLogger(GrpcClientProtocolClient.class);
-  private static AtomicInteger clientCount = new AtomicInteger();
+  private static AtomicInteger clientChannelCount = new AtomicInteger();
   private final Supplier<String> name;
   private final RaftPeer target;
   private final ManagedChannel channel;
@@ -92,23 +92,9 @@ public class GrpcClientProtocolClient implements Closeable {
 
   private final AtomicReference<AsyncStreamObservers> unorderedStreamObservers = new AtomicReference<>();
 
-  public void printCallStatck(String str) {
-    Throwable ex = new Throwable();
-    StackTraceElement[] stackElements = ex.getStackTrace();
-    if (stackElements != null) {
-      for (int i = 0; i < stackElements.length; i++) {
-        System.err.println(str + ": "
-                + stackElements[i].getClassName()+ "|"
-                + stackElements[i].getFileName()+"|"
-                + stackElements[i].getLineNumber()+"|"
-                + stackElements[i].getMethodName());
-      }
-    }
-  }
-
   GrpcClientProtocolClient(ClientId id, RaftPeer target, RaftProperties properties, GrpcTlsConfig tlsConf) {
-    printCallStatck("wangjie grpc create client:" + this.hashCode() + " port:" + target.getAddress() + " " +
-            " thread:" + Thread.currentThread().getId() + " clientCount:" + clientCount.get());
+    System.out.println("grpc create client this:" + this.hashCode() + " addr:" + target.getAddress() +
+      " client channel count:" + clientChannelCount.get());
     this.name = JavaUtils.memoize(() -> id + "->" + target.getId());
     this.target = target;
     final SizeInBytes flowControlWindow = GrpcConfigKeys.flowControlWindow(properties, LOG::debug);
@@ -144,7 +130,7 @@ public class GrpcClientProtocolClient implements Closeable {
     channel = channelBuilder.flowControlWindow(flowControlWindow.getSizeInt())
         .maxInboundMessageSize(maxMessageSize.getSizeInt())
         .build();
-    clientCount.incrementAndGet();
+    clientChannelCount.incrementAndGet();
     blockingStub = RaftClientProtocolServiceGrpc.newBlockingStub(channel);
     asyncStub = RaftClientProtocolServiceGrpc.newStub(channel);
     adminBlockingStub = AdminProtocolServiceGrpc.newBlockingStub(channel);
@@ -159,16 +145,17 @@ public class GrpcClientProtocolClient implements Closeable {
 
   @Override
   public void close() {
-      try {
-          Optional.ofNullable(orderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
-          Optional.ofNullable(unorderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
-      } catch (Exception e) {
-        System.err.println("wangjie close GrpcClient exception:" + e);
-      }
+    try {
+      Optional.ofNullable(orderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
+      Optional.ofNullable(unorderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
+    } catch (Exception e) {
+        LOG.error("stream observer close exception", e);
+    }
     GrpcUtil.shutdownManagedChannel(channel, LOG);
-    clientCount.decrementAndGet();
-//    printCallStatck("wangjie grpc close client:" + this.hashCode() + " port:" + target.getAddress() +
-//            " shutdown:" + channel.isShutdown() + " terminated:" + channel.isTerminated() + " thread:" + Thread.currentThread().getId());
+    clientChannelCount.decrementAndGet();
+    System.out.println("grpc close client this:" + this.hashCode() + " addr:" + target.getAddress() +
+      " shutdown:" + channel.isShutdown() + " terminated:" + channel.isTerminated() +
+      " client channel count:" + clientChannelCount.get());
     scheduler.close();
   }
 

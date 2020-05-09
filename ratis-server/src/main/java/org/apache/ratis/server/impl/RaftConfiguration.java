@@ -218,20 +218,10 @@ public final class RaftConfiguration {
     }
 
     if (!isStable() || conf.size() != newMembers.size()) {
-      System.err.println("wangjie hasNoChange this:" + this.hashCode() +
-              " isStable:" + isStable() + " conf.size:" + conf.size() +
-              " newMembers.size:" + newMembers.size() +
-              " conf:" + conf.toString() +
-              " newMembers:" + str);
       return false;
     }
     for (RaftPeer peer : newMembers) {
       if (!conf.contains(peer.getId())) {
-        System.err.println("wangjie hasNoChange this:" + this.hashCode() +
-                " isStable:" + isStable() + " conf.size:" + conf.size() +
-                " newMembers.size:" + newMembers.size() +
-                " conf:" + conf.toString() +
-                " newMembers:" + str);
         return false;
       }
     }

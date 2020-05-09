@@ -229,9 +229,5 @@ public interface GrpcUtil {
         LOG.error("Unexpected exception while waiting for channel termination", e);
       }
     }
-
-    if (!managedChannel.isTerminated()) {
-      System.err.println("wangjie fail to shutdownManagedChannel");
-    }
   }
 }

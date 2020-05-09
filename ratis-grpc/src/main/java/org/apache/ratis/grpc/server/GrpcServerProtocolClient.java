@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * ring. The stream implementation utilizes gRPC.
  */
 public class GrpcServerProtocolClient implements Closeable {
-  private static AtomicInteger serverCount = new AtomicInteger();
+  private static AtomicInteger serverChannelCount = new AtomicInteger();
   private final ManagedChannel channel;
   private final TimeDuration requestTimeoutDuration;
   private final RaftServerProtocolServiceBlockingStub blockingStub;
@@ -56,8 +56,8 @@ public class GrpcServerProtocolClient implements Closeable {
   private final RaftPeer target;
   public GrpcServerProtocolClient(RaftPeer target, int flowControlWindow,
       TimeDuration requestTimeoutDuration, GrpcTlsConfig tlsConfig) {
-    System.err.println("wangjie grpc create server:" + this.hashCode() + " port:" + target.getAddress() +
-            " serverCount:" + serverCount.get());
+    System.out.println("grpc create server this:" + this.hashCode() + " addr:" + target.getAddress() +
+      " server channel count:" + serverChannelCount.get());
     raftPeerId = target.getId();
     this.target = target;
     NettyChannelBuilder channelBuilder =
@@ -89,7 +89,7 @@ public class GrpcServerProtocolClient implements Closeable {
       channelBuilder.negotiationType(NegotiationType.PLAINTEXT);
     }
     channel = channelBuilder.flowControlWindow(flowControlWindow).build();
-    serverCount.incrementAndGet();
+    serverChannelCount.incrementAndGet();
     blockingStub = RaftServerProtocolServiceGrpc.newBlockingStub(channel);
     asyncStub = RaftServerProtocolServiceGrpc.newStub(channel);
     this.requestTimeoutDuration = requestTimeoutDuration;
@@ -98,9 +98,10 @@ public class GrpcServerProtocolClient implements Closeable {
   @Override
   public void close() {
     GrpcUtil.shutdownManagedChannel(channel, LOG);
-    serverCount.decrementAndGet();
-//    System.err.println("wangjie grpc close server:" + this.hashCode() + " port:" + target.getAddress() +
-//            " shutdown:" + channel.isShutdown() + " terminated:" + channel.isTerminated());
+    serverChannelCount.decrementAndGet();
+    System.out.println("grpc close server this:" + this.hashCode() + " addr:" + target.getAddress() +
+      " shutdown:" + channel.isShutdown() + " terminated:" + channel.isTerminated() +
+      " server channel count:" + serverChannelCount.get());
   }
 
   public RequestVoteReplyProto requestVote(RequestVoteRequestProto request) {

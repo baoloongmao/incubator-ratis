@@ -148,50 +148,15 @@ public class LifeCycle {
     this.name = name;
   }
 
-  private String runningStack;
-
-  public void recordCallStatck(String str) {
-    runningStack = runningStack + str;
-    Throwable ex = new Throwable();
-    StackTraceElement[] stackElements = ex.getStackTrace();
-    if (stackElements != null) {
-      for (int i = 0; i < stackElements.length; i++) {
-        runningStack = runningStack + ": "
-                + stackElements[i].getClassName()+ "|"
-                + stackElements[i].getFileName()+"|"
-                + stackElements[i].getLineNumber()+"|"
-                + stackElements[i].getMethodName() + "\n";
-      }
-    }
-  }
-
   /** Transition from the current state to the given state. */
   public void transition(final State to) {
     final State from = current.getAndSet(to);
-    if (!from.isRunning() && to.isRunning()) {
-      String str = "wangjie transante thread:" + Thread.currentThread().getId() +
-              " name:" + name + " from:" + from + " to:" + to;
-      recordCallStatck(str);
-    }
-
-    if (from.isRunning() && to.isRunning() && runningStack != null) {
-      System.err.println(runningStack);
-    }
     State.validate(name, from, to);
   }
 
   /** Transition from the current state to the given state if the current state is not equal to the given state. */
   public void transitionIfNotEqual(final State to) {
     final State from = current.getAndSet(to);
-    if (!from.isRunning() && to.isRunning()) {
-      String str = "wangjie transitionIfNotEqual thread:" + Thread.currentThread().getId() +
-              " name:" + name + " from:" + from + " to:" + to;
-      recordCallStatck(str);
-    }
-
-    if (from.isRunning() && to.isRunning() && runningStack != null) {
-      System.err.println(runningStack);
-    }
     if (from != to) {
       State.validate(name, from, to);
     }
@@ -204,15 +169,6 @@ public class LifeCycle {
    * @return true iff the current state is equal to the specified from state.
    */
   public boolean compareAndTransition(final State from, final State to) {
-    if (!from.isRunning() && to.isRunning()) {
-      String str = "wangjie compareAndTransition thread:" + Thread.currentThread().getId() +
-              " name:" + name + " from:" + from + " to:" + to;
-      recordCallStatck(str);
-    }
-
-    if (from.isRunning() && to.isRunning() && runningStack != null) {
-      System.err.println(runningStack);
-    }
     if (current.compareAndSet(from, to)) {
       State.validate(name, from, to);
       return true;
