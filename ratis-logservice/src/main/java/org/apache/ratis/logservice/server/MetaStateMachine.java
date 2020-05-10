@@ -268,6 +268,7 @@ public class MetaStateMachine extends BaseStateMachine {
                         " type:" + type + " request:" + request.getContent() + " ," + request.size() + "," + request.hashCode() +
                         " exception:" + e);
             }
+            throw e;
         } finally{
             if (timerContext != null) {
                 timerContext.stop();
