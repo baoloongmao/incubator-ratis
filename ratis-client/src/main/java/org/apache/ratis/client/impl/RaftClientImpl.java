@@ -289,8 +289,15 @@ public final class RaftClientImpl implements RaftClient {
         return supplier.get();
       }
     };
+    System.err.println("wangjie create log sendRequestWithRetry enter pending:" + pending.hashCode() +
+            " thread:" + Thread.currentThread().getId() + " this:" + this.hashCode());
     while (true) {
       final RaftClientRequest request = pending.newRequest();
+      Message msg = request.getMessage();
+      System.err.println("wangjie create log sendRequestWithRetry request:" + msg.getContent() + " ," + msg.size() + "," + msg.hashCode() +
+              " pending:" + pending.hashCode() +
+              " thread:" + Thread.currentThread().getId() + " this:" + this.hashCode());
+
       IOException ioe = null;
       try {
         final RaftClientReply reply = sendRequest(request);
@@ -304,6 +311,9 @@ public final class RaftClientImpl implements RaftClient {
         ioe = e;
       }
 
+      System.err.println("wangjie create log sendRequestWithRetry request:" + msg.getContent() + " ," + msg.size() + "," + msg.hashCode() +
+              " pending:" + pending.hashCode() +
+              " thread:" + Thread.currentThread().getId() + " this:" + this.hashCode() + " ioe:" + ioe);
       pending.incrementExceptionCount(ioe);
       ClientRetryEvent event = new ClientRetryEvent(request, ioe, pending);
       final RetryPolicy.Action action = retryPolicy.handleAttemptFailure(event);

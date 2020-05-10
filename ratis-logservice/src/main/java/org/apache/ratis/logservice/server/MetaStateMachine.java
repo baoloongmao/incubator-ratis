@@ -240,9 +240,9 @@ public class MetaStateMachine extends BaseStateMachine {
             if (type == CREATELOG) {
                 CreateLogRequestProto createLog = req.getCreateLog();
                 LogName name = LogServiceProtoUtil.toLogName(createLog.getLogName());
-                printCallStatck("wangjie create log before:" + metricRegistry.timer(type.name()).getCount() +
+                System.err.println("wangjie create log before:" + metricRegistry.timer(type.name()).getCount() +
                   " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " name:" + name.getName() +
-                  " type:" + type);
+                  " type:" + type + " request:" + request.getContent() + " ," + request.size() + "," + request.hashCode());
             }
             timerContext = metricRegistry.timer(type.name()).time();
             switch (type) {
@@ -266,14 +266,15 @@ public class MetaStateMachine extends BaseStateMachine {
                     LogName name = LogServiceProtoUtil.toLogName(createLog.getLogName());
                     System.err.println("wangjie create log middle:" + metricRegistry.timer(type.name()).getCount() +
                             " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " name:" + name.getName() +
-                            " type:" + type);
+                            " type:" + type + " request:" + request.getContent() + " ," + request.size() + "," + request.hashCode());
                 }
                 timerContext.stop();
                 if (type == CREATELOG) {
                     CreateLogRequestProto createLog = req.getCreateLog();
                     LogName name = LogServiceProtoUtil.toLogName(createLog.getLogName());
                     System.err.println("wangjie create log after:" + metricRegistry.timer(type.name()).getCount() +
-                            " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " name:" + name.getName());
+                            " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " name:" + name.getName() +
+                            " type:" + type + " request:" + request.getContent() + " ," + request.size() + "," + request.hashCode());
                 }
             }
         }
