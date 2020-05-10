@@ -259,15 +259,17 @@ public class MetaStateMachine extends BaseStateMachine {
             }
             CompletableFuture<Message> reply = super.query(request);
             return reply;
-        }finally{
+        } catch (Exception e) {
+            if (type == CREATELOG) {
+                CreateLogRequestProto createLog = req.getCreateLog();
+                LogName name = LogServiceProtoUtil.toLogName(createLog.getLogName());
+                System.err.println("wangjie create log middle:" + metricRegistry.timer(type.name()).getCount() +
+                        " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " name:" + name.getName() +
+                        " type:" + type + " request:" + request.getContent() + " ," + request.size() + "," + request.hashCode() +
+                        " exception:" + e);
+            }
+        } finally{
             if (timerContext != null) {
-                if (type == CREATELOG) {
-                    CreateLogRequestProto createLog = req.getCreateLog();
-                    LogName name = LogServiceProtoUtil.toLogName(createLog.getLogName());
-                    System.err.println("wangjie create log middle:" + metricRegistry.timer(type.name()).getCount() +
-                            " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " name:" + name.getName() +
-                            " type:" + type + " request:" + request.getContent() + " ," + request.size() + "," + request.hashCode());
-                }
                 timerContext.stop();
                 if (type == CREATELOG) {
                     CreateLogRequestProto createLog = req.getCreateLog();

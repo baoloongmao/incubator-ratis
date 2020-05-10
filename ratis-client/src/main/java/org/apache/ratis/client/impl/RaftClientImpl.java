@@ -41,10 +41,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -289,16 +286,17 @@ public final class RaftClientImpl implements RaftClient {
         return supplier.get();
       }
     };
-    System.err.println("wangjie create log sendRequestWithRetry enter pending:" + pending.hashCode() +
+    System.err.println("wangjie create log sendRequestWithRetry 111 enter pending:" + pending.hashCode() +
             " thread:" + Thread.currentThread().getId() + " this:" + this.hashCode());
     while (true) {
       final RaftClientRequest request = pending.newRequest();
       Message msg = request.getMessage();
-      System.err.println("wangjie create log sendRequestWithRetry request:" + msg.getContent() + " ," + msg.size() + "," + msg.hashCode() +
+      System.err.println("wangjie create log sendRequestWithRetry 222 request:" + msg.getContent() + " ," + msg.size() + "," + msg.hashCode() +
               " pending:" + pending.hashCode() +
               " thread:" + Thread.currentThread().getId() + " this:" + this.hashCode());
 
       IOException ioe = null;
+      Exception ce = null;
       try {
         final RaftClientReply reply = sendRequest(request);
 
@@ -309,11 +307,13 @@ public final class RaftClientImpl implements RaftClient {
         throw e;
       } catch (IOException e) {
         ioe = e;
+      } catch (Exception e) {
+        ce = e;
       }
 
-      System.err.println("wangjie create log sendRequestWithRetry request:" + msg.getContent() + " ," + msg.size() + "," + msg.hashCode() +
+      System.err.println("wangjie create log sendRequestWithRetry 333 request:" + msg.getContent() + " ," + msg.size() + "," + msg.hashCode() +
               " pending:" + pending.hashCode() +
-              " thread:" + Thread.currentThread().getId() + " this:" + this.hashCode() + " ioe:" + ioe);
+              " thread:" + Thread.currentThread().getId() + " this:" + this.hashCode() + " ioe:" + ioe + " ce:" + ce);
       pending.incrementExceptionCount(ioe);
       ClientRetryEvent event = new ClientRetryEvent(request, ioe, pending);
       final RetryPolicy.Action action = retryPolicy.handleAttemptFailure(event);
