@@ -30,6 +30,7 @@ public abstract class RaftClientRpcWithProxy<PROXY extends Closeable>
   private final PeerProxyMap<PROXY> proxies;
 
   protected RaftClientRpcWithProxy(PeerProxyMap<PROXY> proxies) {
+    System.err.println("wangjie RaftClientRpcWithProxy proxies:" + proxies.hashCode());
     this.proxies = proxies;
   }
 
