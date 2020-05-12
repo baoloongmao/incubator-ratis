@@ -75,7 +75,7 @@ import java.util.function.Supplier;
 public class GrpcClientProtocolClient implements Closeable {
   public static final Logger LOG = LoggerFactory.getLogger(GrpcClientProtocolClient.class);
   private static AtomicInteger clientChannelCount = new AtomicInteger();
-  private static List<Integer> channels = new CopyOnWriteArrayList<>();
+  private static Map<Integer, Integer> channels = new ConcurrentHashMap<>();
   private final Supplier<String> name;
   private final RaftPeer target;
   private final ManagedChannel channel;
@@ -94,7 +94,7 @@ public class GrpcClientProtocolClient implements Closeable {
 
   private String getChannels() {
     String channelStr = "";
-    for (int channel : channels) {
+    for (int channel : channels.keySet()) {
       channelStr = channelStr + "," + channel;
     }
     return channelStr;
@@ -137,7 +137,7 @@ public class GrpcClientProtocolClient implements Closeable {
     channel = channelBuilder.flowControlWindow(flowControlWindow.getSizeInt())
         .maxInboundMessageSize(maxMessageSize.getSizeInt())
         .build();
-    channels.add(channel.hashCode());
+    channels.put(channel.hashCode(), channel.hashCode());
     clientChannelCount.incrementAndGet();
     blockingStub = RaftClientProtocolServiceGrpc.newBlockingStub(channel);
     asyncStub = RaftClientProtocolServiceGrpc.newStub(channel);
@@ -161,6 +161,7 @@ public class GrpcClientProtocolClient implements Closeable {
     }
     GrpcUtil.shutdownManagedChannel(channel, LOG);
     clientChannelCount.decrementAndGet();
+
     channels.remove(channel.hashCode());
     System.out.println("grpc close client this:" + this.hashCode() + " addr:" + target.getAddress() +
       " channel:" + channel.hashCode() +
