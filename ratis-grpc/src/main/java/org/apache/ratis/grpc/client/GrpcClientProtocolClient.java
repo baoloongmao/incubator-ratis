@@ -62,11 +62,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -76,6 +75,7 @@ import java.util.function.Supplier;
 public class GrpcClientProtocolClient implements Closeable {
   public static final Logger LOG = LoggerFactory.getLogger(GrpcClientProtocolClient.class);
   private static AtomicInteger clientChannelCount = new AtomicInteger();
+  private static List<Integer> channels = new CopyOnWriteArrayList<>();
   private final Supplier<String> name;
   private final RaftPeer target;
   private final ManagedChannel channel;
@@ -92,9 +92,16 @@ public class GrpcClientProtocolClient implements Closeable {
 
   private final AtomicReference<AsyncStreamObservers> unorderedStreamObservers = new AtomicReference<>();
 
+  private String getChannels() {
+    String channelStr = "";
+    for (int channel : channels) {
+      channelStr = channelStr + "," + channel;
+    }
+    return channelStr;
+  }
   GrpcClientProtocolClient(ClientId id, RaftPeer target, RaftProperties properties, GrpcTlsConfig tlsConf) {
     System.out.println("grpc create client this:" + this.hashCode() + " addr:" + target.getAddress() +
-      " client channel count:" + clientChannelCount.get());
+      " client channel count:" + clientChannelCount.get() + " channels:" + getChannels());
     this.name = JavaUtils.memoize(() -> id + "->" + target.getId());
     this.target = target;
     final SizeInBytes flowControlWindow = GrpcConfigKeys.flowControlWindow(properties, LOG::debug);
@@ -130,6 +137,7 @@ public class GrpcClientProtocolClient implements Closeable {
     channel = channelBuilder.flowControlWindow(flowControlWindow.getSizeInt())
         .maxInboundMessageSize(maxMessageSize.getSizeInt())
         .build();
+    channels.add(channel.hashCode());
     clientChannelCount.incrementAndGet();
     blockingStub = RaftClientProtocolServiceGrpc.newBlockingStub(channel);
     asyncStub = RaftClientProtocolServiceGrpc.newStub(channel);
@@ -153,9 +161,11 @@ public class GrpcClientProtocolClient implements Closeable {
     }
     GrpcUtil.shutdownManagedChannel(channel, LOG);
     clientChannelCount.decrementAndGet();
+    channels.remove(channel.hashCode());
     System.out.println("grpc close client this:" + this.hashCode() + " addr:" + target.getAddress() +
+      " channel:" + channel.hashCode() +
       " shutdown:" + channel.isShutdown() + " terminated:" + channel.isTerminated() +
-      " client channel count:" + clientChannelCount.get());
+      " client channel count:" + clientChannelCount.get() + " channels:" + getChannels());
     scheduler.close();
   }
 
