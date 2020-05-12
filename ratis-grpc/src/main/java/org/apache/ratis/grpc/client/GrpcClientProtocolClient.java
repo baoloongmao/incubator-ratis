@@ -178,7 +178,7 @@ public class GrpcClientProtocolClient implements Closeable {
     clientChannelCount.decrementAndGet();
 
     channels.remove(channel.hashCode());
-    System.out.println("grpc close client this:" + this.hashCode() + " addr:" + target.getAddress() +
+    printCallStatck("grpc close client this:" + this.hashCode() + " addr:" + target.getAddress() +
       " channel:" + channel.hashCode() +
       " shutdown:" + channel.isShutdown() + " terminated:" + channel.isTerminated() +
       " client channel count:" + clientChannelCount.get() + " channels:" + getChannels());
