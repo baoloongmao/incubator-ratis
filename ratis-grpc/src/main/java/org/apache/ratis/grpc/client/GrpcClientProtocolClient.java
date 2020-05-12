@@ -115,7 +115,7 @@ public class GrpcClientProtocolClient implements Closeable {
   }
 
   GrpcClientProtocolClient(ClientId id, RaftPeer target, RaftProperties properties, GrpcTlsConfig tlsConf) {
-    printCallStatck("grpc create client this:" + this.hashCode() + " addr:" + target.getAddress() +
+    System.err.println("grpc create client this:" + this.hashCode() + " addr:" + target.getAddress() +
       " client channel count:" + clientChannelCount.get() + " channels:" + getChannels());
     this.name = JavaUtils.memoize(() -> id + "->" + target.getId());
     this.target = target;
