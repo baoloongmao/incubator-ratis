@@ -68,24 +68,24 @@ public abstract class GroupManagementBaseTest extends BaseTest {
   public void testSingleGroupRestart() throws Exception {
     System.err.println("wangjie testSingleGroupRestart begin");
     final MiniRaftCluster cluster = getCluster(0);
-    LOG.info("Start testMultiGroup" + cluster.printServers());
+    System.err.println("Start testMultiGroup" + cluster.printServers());
 
     // Start server with null group
     final List<RaftPeerId> ids = Arrays.stream(MiniRaftCluster.generateIds(3, 0))
         .map(RaftPeerId::valueOf).collect(Collectors.toList());
     ids.forEach(id -> cluster.putNewServer(id, null, true));
-    LOG.info("putNewServer: " + cluster.printServers());
+    System.err.println("putNewServer: " + cluster.printServers());
 
     cluster.start();
 
     // Make sure that there are no leaders.
     TimeUnit.SECONDS.sleep(1);
-    LOG.info("start: " + cluster.printServers());
+    System.err.println("start: " + cluster.printServers());
     Assert.assertNull(cluster.getLeader());
 
     // Add groups
     final RaftGroup newGroup = RaftGroup.valueOf(RaftGroupId.randomId(), cluster.getPeers());
-    LOG.info("add new group: " + newGroup);
+    System.err.println("add new group: " + newGroup);
     final RaftClient client = cluster.createClient(newGroup);
     for(RaftPeer p : newGroup.getPeers()) {
       client.groupAdd(newGroup, p.getId());
@@ -94,7 +94,7 @@ public abstract class GroupManagementBaseTest extends BaseTest {
     TimeUnit.SECONDS.sleep(1);
 
     // restart the servers with null group
-    LOG.info("restart servers");
+    System.err.println("restart servers");
     for(RaftPeer p : newGroup.getPeers()) {
       cluster.restartServer(p.getId(), null, false);
     }
@@ -113,23 +113,6 @@ public abstract class GroupManagementBaseTest extends BaseTest {
     runMultiGroupTest(idIndex, 0);
     System.err.println("wangjie testMultiGroup5Nodes end");
   }
-
-  @Test
-  public void testMultiGroup7Nodes() throws Exception {
-    System.err.println("wangjie testMultiGroup7Nodes begin");
-    final int[] idIndex = {1, 6, 7};
-    runMultiGroupTest(idIndex, 1);
-    System.err.println("wangjie testMultiGroup7Nodes end");
-  }
-
-  @Test
-  public void testMultiGroup9Nodes() throws Exception {
-    System.err.println("wangjie testMultiGroup9Nodes begin");
-    final int[] idIndex = {5, 8, 9};
-    runMultiGroupTest(idIndex, 2);
-    System.err.println("wangjie testMultiGroup9Nodes end");
-  }
-
   private void runMultiGroupTest(int[] idIndex, int chosen) throws Exception {
     printThreadCount(null, "init");
     runMultiGroupTest(getCluster(0), idIndex, chosen, NOOP);
@@ -238,27 +221,5 @@ public abstract class GroupManagementBaseTest extends BaseTest {
   }
 
   static void printThreadCount(String type, String label) {
-  }
-
-  @Test
-  public void testGroupAlreadyExists() throws Exception {
-    System.err.println("wangjie testGroupAlreadyExists start");
-    final MiniRaftCluster cluster = getCluster(1);
-    cluster.start();
-    final RaftPeer peer = cluster.getPeers().get(0);
-    final RaftPeerId peerId = peer.getId();
-    final RaftGroup group = RaftGroup.valueOf(cluster.getGroupId(), peer);
-    final RaftClient client = cluster.createClient();
-    Assert.assertEquals(group, cluster.getRaftServerImpl(peerId).getGroup());
-    try {
-      client.groupAdd(group, peer.getId());
-    } catch (IOException ex) {
-      // HadoopRPC throws RemoteException, which makes it hard to check if
-      // the exception is instance of AlreadyExistsException
-      Assert.assertTrue(ex.toString().contains(AlreadyExistsException.class.getCanonicalName()));
-    }
-    Assert.assertEquals(group, cluster.getRaftServerImpl(peerId).getGroup());
-    cluster.shutdown();
-    System.err.println("wangjie testGroupAlreadyExists end");
   }
 }
