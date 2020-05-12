@@ -66,6 +66,7 @@ public abstract class GroupManagementBaseTest extends BaseTest {
 
   @Test
   public void testSingleGroupRestart() throws Exception {
+    System.err.println("wangjie testSingleGroupRestart begin");
     final MiniRaftCluster cluster = getCluster(0);
     LOG.info("Start testMultiGroup" + cluster.printServers());
 
@@ -107,6 +108,7 @@ public abstract class GroupManagementBaseTest extends BaseTest {
 
   @Test
   public void testMultiGroup5Nodes() throws Exception {
+    System.err.println("wangjie testMultiGroup5Nodes begin");
     final int[] idIndex = {3, 4, 5};
     runMultiGroupTest(idIndex, 0);
     System.err.println("wangjie testMultiGroup5Nodes end");
@@ -114,6 +116,7 @@ public abstract class GroupManagementBaseTest extends BaseTest {
 
   @Test
   public void testMultiGroup7Nodes() throws Exception {
+    System.err.println("wangjie testMultiGroup7Nodes begin");
     final int[] idIndex = {1, 6, 7};
     runMultiGroupTest(idIndex, 1);
     System.err.println("wangjie testMultiGroup7Nodes end");
@@ -121,6 +124,7 @@ public abstract class GroupManagementBaseTest extends BaseTest {
 
   @Test
   public void testMultiGroup9Nodes() throws Exception {
+    System.err.println("wangjie testMultiGroup9Nodes begin");
     final int[] idIndex = {5, 8, 9};
     runMultiGroupTest(idIndex, 2);
     System.err.println("wangjie testMultiGroup9Nodes end");
@@ -238,6 +242,7 @@ public abstract class GroupManagementBaseTest extends BaseTest {
 
   @Test
   public void testGroupAlreadyExists() throws Exception {
+    System.err.println("wangjie testGroupAlreadyExists start");
     final MiniRaftCluster cluster = getCluster(1);
     cluster.start();
     final RaftPeer peer = cluster.getPeers().get(0);
