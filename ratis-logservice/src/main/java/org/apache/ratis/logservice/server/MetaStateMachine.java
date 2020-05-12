@@ -39,7 +39,6 @@ import org.apache.ratis.logservice.common.LogAlreadyExistException;
 import org.apache.ratis.logservice.common.LogNotFoundException;
 import org.apache.ratis.logservice.common.NoEnoughWorkersException;
 import org.apache.ratis.logservice.metrics.LogServiceMetaDataMetrics;
-import org.apache.ratis.logservice.metrics.LogServiceMetrics;
 import org.apache.ratis.logservice.proto.LogServiceProtos;
 import org.apache.ratis.logservice.proto.MetaServiceProtos;
 import org.apache.ratis.logservice.proto.MetaServiceProtos.CreateLogRequestProto;
@@ -50,7 +49,6 @@ import org.apache.ratis.logservice.proto.MetaServiceProtos.LogServiceUnregisterL
 import org.apache.ratis.logservice.proto.MetaServiceProtos.MetaSMRequestProto;
 import org.apache.ratis.logservice.util.LogServiceProtoUtil;
 import org.apache.ratis.logservice.util.MetaServiceProtoUtil;
-import org.apache.ratis.metrics.RatisMetricRegistry;
 import org.apache.ratis.proto.RaftProtos;
 import org.apache.ratis.protocol.*;
 
