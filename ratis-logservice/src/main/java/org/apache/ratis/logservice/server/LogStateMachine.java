@@ -50,7 +50,7 @@ import org.apache.ratis.logservice.api.LogName;
 import org.apache.ratis.logservice.common.Constants;
 import org.apache.ratis.logservice.impl.ArchiveHdfsLogReader;
 import org.apache.ratis.logservice.impl.ArchiveHdfsLogWriter;
-import org.apache.ratis.logservice.metrics.LogServiceMetricsRegistry;
+import org.apache.ratis.logservice.metrics.LogServiceMetrics;
 import org.apache.ratis.logservice.proto.LogServiceProtos;
 import org.apache.ratis.logservice.proto.LogServiceProtos.AppendLogEntryRequestProto;
 import org.apache.ratis.logservice.proto.LogServiceProtos.GetLogLengthRequestProto;
@@ -60,7 +60,6 @@ import org.apache.ratis.logservice.proto.LogServiceProtos.LogServiceRequestProto
 import org.apache.ratis.logservice.proto.LogServiceProtos.ReadLogRequestProto;
 import org.apache.ratis.logservice.util.LogServiceProtoUtil;
 import org.apache.ratis.logservice.util.LogServiceUtils;
-import org.apache.ratis.metrics.RatisMetricRegistry;
 import org.apache.ratis.proto.RaftProtos;
 import org.apache.ratis.proto.RaftProtos.LogEntryProto;
 import org.apache.ratis.protocol.ClientId;
@@ -90,7 +89,7 @@ public class LogStateMachine extends BaseStateMachine {
   public static final Logger LOG = LoggerFactory.getLogger(LogStateMachine.class);
   public static final long DEFAULT_ARCHIVE_THRESHOLD_PER_FILE = 1000000;
   private final RaftProperties properties;
-  private RatisMetricRegistry metricRegistry;
+  private LogServiceMetrics metricRegistry;
   private Timer sizeRequestTimer;
   private Timer readNextQueryTimer;
   private Timer getStateTimer;
@@ -158,20 +157,20 @@ public class LogStateMachine extends BaseStateMachine {
     this.storage.init(raftStorage);
     this.proxy = (RaftServerProxy) server;
     //TODO: using groupId for metric now but better to tag it with LogName
-    this.metricRegistry = LogServiceMetricsRegistry
-        .createMetricRegistryForLogService(groupId.toString(), server.getId().toString());
-    this.readNextQueryTimer = metricRegistry.timer("readNextQueryTime");
-    this.startIndexTimer= metricRegistry.timer("startIndexTime");
-    this.sizeRequestTimer = metricRegistry.timer("sizeRequestTime");
-    this.getStateTimer = metricRegistry.timer("getStateTime");
-    this.lastIndexQueryTimer = metricRegistry.timer("lastIndexQueryTime");
-    this.lengthQueryTimer = metricRegistry.timer("lengthQueryTime");
-    this.syncRequesTimer = metricRegistry.timer("syncRequesTime");
-    this.appendRequestTimer = metricRegistry.timer("appendRequestTime");
-    this.getCloseLogTimer = metricRegistry.timer("getCloseLogTime");
+    this.metricRegistry = new LogServiceMetrics(groupId.toString(),
+        server.getId().toString());
+    this.readNextQueryTimer = metricRegistry.getTimer("readNextQueryTime");
+    this.startIndexTimer= metricRegistry.getTimer("startIndexTime");
+    this.sizeRequestTimer = metricRegistry.getTimer("sizeRequestTime");
+    this.getStateTimer = metricRegistry.getTimer("getStateTime");
+    this.lastIndexQueryTimer = metricRegistry.getTimer("lastIndexQueryTime");
+    this.lengthQueryTimer = metricRegistry.getTimer("lengthQueryTime");
+    this.syncRequesTimer = metricRegistry.getTimer("syncRequesTime");
+    this.appendRequestTimer = metricRegistry.getTimer("appendRequestTime");
+    this.getCloseLogTimer = metricRegistry.getTimer("getCloseLogTime");
     //archiving request time not the actual archiving time
-    this.archiveLogRequestTimer = metricRegistry.timer("archiveLogRequestTime");
-    this.archiveLogTimer = metricRegistry.timer("archiveLogTime");
+    this.archiveLogRequestTimer = metricRegistry.getTimer("archiveLogRequestTime");
+    this.archiveLogTimer = metricRegistry.getTimer("archiveLogTime");
     loadSnapshot(storage.getLatestSnapshot());
     executorService = Executors.newSingleThreadExecutor();
     this.archivalInfo =
@@ -485,7 +484,7 @@ public class LogStateMachine extends BaseStateMachine {
   @Override
   public void close() {
     reset();
-    LogServiceMetricsRegistry.unregister(metricRegistry);
+    metricRegistry.unregister();
   }
 
   @Override

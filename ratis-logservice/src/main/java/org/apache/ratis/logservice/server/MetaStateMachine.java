@@ -38,7 +38,8 @@ import org.apache.ratis.logservice.common.Constants;
 import org.apache.ratis.logservice.common.LogAlreadyExistException;
 import org.apache.ratis.logservice.common.LogNotFoundException;
 import org.apache.ratis.logservice.common.NoEnoughWorkersException;
-import org.apache.ratis.logservice.metrics.LogServiceMetricsRegistry;
+import org.apache.ratis.logservice.metrics.LogServiceMetaDataMetrics;
+import org.apache.ratis.logservice.metrics.LogServiceMetrics;
 import org.apache.ratis.logservice.proto.LogServiceProtos;
 import org.apache.ratis.logservice.proto.MetaServiceProtos;
 import org.apache.ratis.logservice.proto.MetaServiceProtos.CreateLogRequestProto;
@@ -103,7 +104,7 @@ public class MetaStateMachine extends BaseStateMachine {
 
     private RaftGroupId metadataGroupId;
     private RaftGroupId logServerGroupId;
-    private RatisMetricRegistry metricRegistry;
+    private LogServiceMetaDataMetrics metricRegistry;
 
     public MetaStateMachine(RaftGroupId metadataGroupId, RaftGroupId logServerGroupId,
                             long failureDetectionPeriod) {
@@ -115,8 +116,7 @@ public class MetaStateMachine extends BaseStateMachine {
     @Override
     public void initialize(RaftServer server, RaftGroupId groupId, RaftStorage storage) throws IOException {
         this.raftServer = server;
-        this.metricRegistry = LogServiceMetricsRegistry
-            .createMetricRegistryForLogServiceMetaData(server.getId().toString());
+        this.metricRegistry = new LogServiceMetaDataMetrics(server.getId().toString());
         super.initialize(server, groupId, storage);
         peerHealthChecker = new Daemon(new PeerHealthChecker(),"peer-Health-Checker");
         peerHealthChecker.start();
@@ -221,7 +221,7 @@ public class MetaStateMachine extends BaseStateMachine {
                 e.printStackTrace();
             }
             type = req.getTypeCase();
-            timerContext = metricRegistry.timer(type.name()).time();
+            timerContext = metricRegistry.getTimer(type.name()).time();
             switch (type) {
 
             case CREATELOG:
@@ -521,6 +521,6 @@ public class MetaStateMachine extends BaseStateMachine {
 
     @Override
     public void close() {
-      LogServiceMetricsRegistry.unregister(metricRegistry);
+      metricRegistry.unregister();
     }
 }
