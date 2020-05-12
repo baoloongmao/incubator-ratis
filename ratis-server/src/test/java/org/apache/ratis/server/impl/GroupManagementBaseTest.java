@@ -102,24 +102,28 @@ public abstract class GroupManagementBaseTest extends BaseTest {
     Assert.assertNotNull(RaftTestUtil.waitForLeader(cluster));
 
     cluster.shutdown();
+    System.err.println("wangjie testSingleGroupRestart end");
   }
 
   @Test
   public void testMultiGroup5Nodes() throws Exception {
     final int[] idIndex = {3, 4, 5};
     runMultiGroupTest(idIndex, 0);
+    System.err.println("wangjie testMultiGroup5Nodes end");
   }
 
   @Test
   public void testMultiGroup7Nodes() throws Exception {
     final int[] idIndex = {1, 6, 7};
     runMultiGroupTest(idIndex, 1);
+    System.err.println("wangjie testMultiGroup7Nodes end");
   }
 
   @Test
   public void testMultiGroup9Nodes() throws Exception {
     final int[] idIndex = {5, 8, 9};
     runMultiGroupTest(idIndex, 2);
+    System.err.println("wangjie testMultiGroup9Nodes end");
   }
 
   private void runMultiGroupTest(int[] idIndex, int chosen) throws Exception {
@@ -250,5 +254,6 @@ public abstract class GroupManagementBaseTest extends BaseTest {
     }
     Assert.assertEquals(group, cluster.getRaftServerImpl(peerId).getGroup());
     cluster.shutdown();
+    System.err.println("wangjie testGroupAlreadyExists end");
   }
 }
