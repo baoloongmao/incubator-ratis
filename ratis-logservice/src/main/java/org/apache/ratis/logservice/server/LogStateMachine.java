@@ -89,7 +89,7 @@ public class LogStateMachine extends BaseStateMachine {
   public static final Logger LOG = LoggerFactory.getLogger(LogStateMachine.class);
   public static final long DEFAULT_ARCHIVE_THRESHOLD_PER_FILE = 1000000;
   private final RaftProperties properties;
-  private LogServiceMetrics metricRegistry;
+  private LogServiceMetrics logServiceMetrics;
   private Timer sizeRequestTimer;
   private Timer readNextQueryTimer;
   private Timer getStateTimer;
@@ -157,20 +157,20 @@ public class LogStateMachine extends BaseStateMachine {
     this.storage.init(raftStorage);
     this.proxy = (RaftServerProxy) server;
     //TODO: using groupId for metric now but better to tag it with LogName
-    this.metricRegistry = new LogServiceMetrics(groupId.toString(),
+    this.logServiceMetrics = new LogServiceMetrics(groupId.toString(),
         server.getId().toString());
-    this.readNextQueryTimer = metricRegistry.getTimer("readNextQueryTime");
-    this.startIndexTimer= metricRegistry.getTimer("startIndexTime");
-    this.sizeRequestTimer = metricRegistry.getTimer("sizeRequestTime");
-    this.getStateTimer = metricRegistry.getTimer("getStateTime");
-    this.lastIndexQueryTimer = metricRegistry.getTimer("lastIndexQueryTime");
-    this.lengthQueryTimer = metricRegistry.getTimer("lengthQueryTime");
-    this.syncRequesTimer = metricRegistry.getTimer("syncRequesTime");
-    this.appendRequestTimer = metricRegistry.getTimer("appendRequestTime");
-    this.getCloseLogTimer = metricRegistry.getTimer("getCloseLogTime");
+    this.readNextQueryTimer = logServiceMetrics.getTimer("readNextQueryTime");
+    this.startIndexTimer= logServiceMetrics.getTimer("startIndexTime");
+    this.sizeRequestTimer = logServiceMetrics.getTimer("sizeRequestTime");
+    this.getStateTimer = logServiceMetrics.getTimer("getStateTime");
+    this.lastIndexQueryTimer = logServiceMetrics.getTimer("lastIndexQueryTime");
+    this.lengthQueryTimer = logServiceMetrics.getTimer("lengthQueryTime");
+    this.syncRequesTimer = logServiceMetrics.getTimer("syncRequesTime");
+    this.appendRequestTimer = logServiceMetrics.getTimer("appendRequestTime");
+    this.getCloseLogTimer = logServiceMetrics.getTimer("getCloseLogTime");
     //archiving request time not the actual archiving time
-    this.archiveLogRequestTimer = metricRegistry.getTimer("archiveLogRequestTime");
-    this.archiveLogTimer = metricRegistry.getTimer("archiveLogTime");
+    this.archiveLogRequestTimer = logServiceMetrics.getTimer("archiveLogRequestTime");
+    this.archiveLogTimer = logServiceMetrics.getTimer("archiveLogTime");
     loadSnapshot(storage.getLatestSnapshot());
     executorService = Executors.newSingleThreadExecutor();
     this.archivalInfo =
@@ -484,7 +484,7 @@ public class LogStateMachine extends BaseStateMachine {
   @Override
   public void close() {
     reset();
-    metricRegistry.unregister();
+    logServiceMetrics.unregister();
   }
 
   @Override

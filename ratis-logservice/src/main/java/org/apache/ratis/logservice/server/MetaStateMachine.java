@@ -102,7 +102,7 @@ public class MetaStateMachine extends BaseStateMachine {
 
     private RaftGroupId metadataGroupId;
     private RaftGroupId logServerGroupId;
-    private LogServiceMetaDataMetrics metricRegistry;
+    private LogServiceMetaDataMetrics logServiceMetaDataMetrics;
 
     public MetaStateMachine(RaftGroupId metadataGroupId, RaftGroupId logServerGroupId,
                             long failureDetectionPeriod) {
@@ -114,7 +114,7 @@ public class MetaStateMachine extends BaseStateMachine {
     @Override
     public void initialize(RaftServer server, RaftGroupId groupId, RaftStorage storage) throws IOException {
         this.raftServer = server;
-        this.metricRegistry = new LogServiceMetaDataMetrics(server.getId().toString());
+        this.logServiceMetaDataMetrics = new LogServiceMetaDataMetrics(server.getId().toString());
         super.initialize(server, groupId, storage);
         peerHealthChecker = new Daemon(new PeerHealthChecker(),"peer-Health-Checker");
         peerHealthChecker.start();
@@ -219,7 +219,7 @@ public class MetaStateMachine extends BaseStateMachine {
                 e.printStackTrace();
             }
             type = req.getTypeCase();
-            timerContext = metricRegistry.getTimer(type.name()).time();
+            timerContext = logServiceMetaDataMetrics.getTimer(type.name()).time();
             switch (type) {
 
             case CREATELOG:
@@ -519,6 +519,6 @@ public class MetaStateMachine extends BaseStateMachine {
 
     @Override
     public void close() {
-      metricRegistry.unregister();
+      logServiceMetaDataMetrics.unregister();
     }
 }
