@@ -101,7 +101,7 @@ public abstract class GroupManagementBaseTest extends BaseTest {
 
     // the servers should retrieve the conf from the log.
     Assert.assertNotNull(RaftTestUtil.waitForLeader(cluster));
-
+    client.close();
     cluster.shutdown();
     System.err.println("wangjie testSingleGroupRestart end");
   }
