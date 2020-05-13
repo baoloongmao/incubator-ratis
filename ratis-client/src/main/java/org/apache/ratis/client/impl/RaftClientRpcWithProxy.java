@@ -30,6 +30,7 @@ public abstract class RaftClientRpcWithProxy<PROXY extends Closeable>
   private final PeerProxyMap<PROXY> proxies;
 
   protected RaftClientRpcWithProxy(PeerProxyMap<PROXY> proxies) {
+    printCallStatck("");
     this.proxies = proxies;
   }
 
