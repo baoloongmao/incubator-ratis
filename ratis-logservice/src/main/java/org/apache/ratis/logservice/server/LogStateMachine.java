@@ -485,6 +485,13 @@ public class LogStateMachine extends BaseStateMachine {
   @Override
   public void close() {
     reset();
+    if (client != null) {
+      try {
+        client.close();
+      } catch (Exception ignored) {
+        LOG.warn(ignored.getClass().getSimpleName() + " is ignored", ignored);
+      }
+    }
   }
 
   @Override

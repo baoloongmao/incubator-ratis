@@ -66,7 +66,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -147,12 +146,7 @@ public class GrpcClientProtocolClient implements Closeable {
   public void close() {
     Optional.ofNullable(orderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
     Optional.ofNullable(unorderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
-    channel.shutdown();
-    try {
-      channel.awaitTermination(5, TimeUnit.SECONDS);
-    } catch (Exception e) {
-      LOG.error("Unexpected exception while waiting for channel termination", e);
-    }
+    GrpcUtil.shutdownManagedChannel(channel);
     scheduler.close();
   }
 

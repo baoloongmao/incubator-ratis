@@ -219,7 +219,9 @@ public class TestRaftServerWithGrpc extends BaseTest implements MiniRaftClusterW
     String message = "2nd Message";
     // Block stateMachine flush data, so that 2nd request will not be
     // completed, and so it will not be removed from pending request map.
-    cluster.createClient(cluster.getLeader().getId(), RetryPolicies.noRetry()).sendAsync(new SimpleMessage(message));
+    try (final RaftClient client = cluster.createClient(cluster.getLeader().getId(), RetryPolicies.noRetry())) {
+      client.sendAsync(new SimpleMessage(message));
+    }
 
    final SortedMap< String, Gauge > gaugeMap =
         cluster.getLeader().getRaftServerMetrics().getRegistry()
@@ -228,9 +230,10 @@ public class TestRaftServerWithGrpc extends BaseTest implements MiniRaftClusterW
     RaftTestUtil.waitFor(() -> (int) gaugeMap.get(gaugeMap.firstKey()).getValue() == message.length(),
         300, 5000);
 
-
     for (int i = 0; i < 10; i++) {
-      cluster.createClient(cluster.getLeader().getId(), RetryPolicies.noRetry()).sendAsync(new SimpleMessage(message));
+      try (final RaftClient client = cluster.createClient(cluster.getLeader().getId(), RetryPolicies.noRetry())) {
+        client.sendAsync(new SimpleMessage(message));
+      }
     }
 
     // Because we have passed 11 requests, and the element queue size is 10.
@@ -242,8 +245,9 @@ public class TestRaftServerWithGrpc extends BaseTest implements MiniRaftClusterW
     // Send a message with 120, our byte size limit is 110, so it should fail
     // and byte size counter limit will be hit.
 
-    cluster.createClient(cluster.getLeader().getId(), RetryPolicies.noRetry())
-        .sendAsync(new SimpleMessage(RandomStringUtils.random(120, true, false)));
+    try (final RaftClient client = cluster.createClient(cluster.getLeader().getId(), RetryPolicies.noRetry())) {
+      client.sendAsync(new SimpleMessage(RandomStringUtils.random(120, true, false)));
+    }
 
     RaftTestUtil.waitFor(() -> cluster.getLeader().getRaftServerMetrics()
         .getCounter(REQUEST_BYTE_SIZE_LIMIT_HIT_COUNTER).getCount() == 1, 300, 5000);
