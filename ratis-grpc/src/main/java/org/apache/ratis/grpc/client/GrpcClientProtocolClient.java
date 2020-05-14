@@ -68,13 +68,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class GrpcClientProtocolClient implements Closeable {
   public static final Logger LOG = LoggerFactory.getLogger(GrpcClientProtocolClient.class);
-
+  private static AtomicInteger clientChannelCount = new AtomicInteger();
   private final Supplier<String> name;
   private final RaftPeer target;
   private final ManagedChannel channel;
@@ -127,6 +128,9 @@ public class GrpcClientProtocolClient implements Closeable {
     channel = channelBuilder.flowControlWindow(flowControlWindow.getSizeInt())
         .maxInboundMessageSize(maxMessageSize.getSizeInt())
         .build();
+    clientChannelCount.incrementAndGet();
+    System.out.println("grpc create client this:" + this.hashCode() +
+            " client channel count:" + clientChannelCount.get());
     blockingStub = RaftClientProtocolServiceGrpc.newBlockingStub(channel);
     asyncStub = RaftClientProtocolServiceGrpc.newStub(channel);
     adminBlockingStub = AdminProtocolServiceGrpc.newBlockingStub(channel);
