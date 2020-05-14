@@ -193,6 +193,7 @@ public class LogStreamImpl implements LogStream {
   public void close() throws Exception {
     // TODO Auto-generated method stub
     state = State.CLOSED;
+    raftClient.close();
   }
 
   @Override

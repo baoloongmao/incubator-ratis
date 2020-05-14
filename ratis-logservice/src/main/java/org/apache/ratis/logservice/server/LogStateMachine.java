@@ -485,6 +485,12 @@ public class LogStateMachine extends BaseStateMachine {
   @Override
   public void close() {
     reset();
+    if (client != null) {
+      try {
+        client.close();
+      } catch (Exception e) {
+      }
+    }
   }
 
   @Override
@@ -747,6 +753,7 @@ public class LogStateMachine extends BaseStateMachine {
       getClient().send(
           () -> LogServiceProtoUtil.toChangeStateRequestProto(LogName.of("Dummy"), st, force)
               .toByteString());
+
   }
 
   private RaftClient getClient() throws IOException {

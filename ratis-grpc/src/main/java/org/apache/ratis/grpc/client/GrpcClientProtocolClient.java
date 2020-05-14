@@ -100,23 +100,7 @@ public class GrpcClientProtocolClient implements Closeable {
     return channelStr;
   }
 
-  public void printCallStatck(String str) {
-    Throwable ex = new Throwable();
-    StackTraceElement[] stackElements = ex.getStackTrace();
-    if (stackElements != null) {
-      for (int i = 0; i < stackElements.length; i++) {
-        System.err.println(str + ": "
-                + stackElements[i].getClassName()+ "|"
-                + stackElements[i].getFileName()+"|"
-                + stackElements[i].getLineNumber()+"|"
-                + stackElements[i].getMethodName());
-      }
-    }
-  }
-
   GrpcClientProtocolClient(ClientId id, RaftPeer target, RaftProperties properties, GrpcTlsConfig tlsConf) {
-    System.err.println("grpc create client this:" + this.hashCode() + " addr:" + target.getAddress() +
-      " client channel count:" + clientChannelCount.get() + " channels:" + getChannels());
     this.name = JavaUtils.memoize(() -> id + "->" + target.getId());
     this.target = target;
     final SizeInBytes flowControlWindow = GrpcConfigKeys.flowControlWindow(properties, LOG::debug);
@@ -154,6 +138,8 @@ public class GrpcClientProtocolClient implements Closeable {
         .build();
     channels.put(channel.hashCode(), channel.hashCode());
     clientChannelCount.incrementAndGet();
+    System.err.println("grpc create client this:" + this.hashCode() + " channel:" + channel.hashCode() +
+            " client channel count:" + clientChannelCount.get() + " channels:" + getChannels());
     blockingStub = RaftClientProtocolServiceGrpc.newBlockingStub(channel);
     asyncStub = RaftClientProtocolServiceGrpc.newStub(channel);
     adminBlockingStub = AdminProtocolServiceGrpc.newBlockingStub(channel);

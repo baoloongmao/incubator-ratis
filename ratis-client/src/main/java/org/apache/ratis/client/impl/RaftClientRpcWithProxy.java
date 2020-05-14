@@ -30,7 +30,6 @@ public abstract class RaftClientRpcWithProxy<PROXY extends Closeable>
   private final PeerProxyMap<PROXY> proxies;
 
   protected RaftClientRpcWithProxy(PeerProxyMap<PROXY> proxies) {
-    printCallStatck("");
     this.proxies = proxies;
   }
 
@@ -48,24 +47,9 @@ public abstract class RaftClientRpcWithProxy<PROXY extends Closeable>
     return getProxies().handleException(serverId, t, reconnect);
   }
 
-  public void printCallStatck(String str) {
-    Throwable ex = new Throwable();
-    StackTraceElement[] stackElements = ex.getStackTrace();
-    if (stackElements != null) {
-      for (int i = 0; i < stackElements.length; i++) {
-        System.err.println(str + ": "
-                + stackElements[i].getClassName()+ "|"
-                + stackElements[i].getFileName()+"|"
-                + stackElements[i].getLineNumber()+"|"
-                + stackElements[i].getMethodName());
-      }
-    }
-  }
-
   @Override
   public void close() {
     System.err.println("wangjie RaftClientRpcWithProxy close proxies:" + proxies.hashCode());
-    printCallStatck("");
     proxies.close();
   }
 }

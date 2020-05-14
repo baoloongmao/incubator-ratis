@@ -95,10 +95,25 @@ public class GrpcServerProtocolClient implements Closeable {
     this.requestTimeoutDuration = requestTimeoutDuration;
   }
 
+  public static void printCallStatck(String str) {
+    Throwable ex = new Throwable();
+    StackTraceElement[] stackElements = ex.getStackTrace();
+    if (stackElements != null) {
+      for (int i = 0; i < stackElements.length; i++) {
+        System.err.println(str + ": "
+                + stackElements[i].getClassName()+ "|"
+                + stackElements[i].getFileName()+"|"
+                + stackElements[i].getLineNumber()+"|"
+                + stackElements[i].getMethodName());
+      }
+    }
+  }
+
   @Override
   public void close() {
     GrpcUtil.shutdownManagedChannel(channel, LOG);
     serverChannelCount.decrementAndGet();
+    printCallStatck("close server");
     System.out.println("grpc close server this:" + this.hashCode() + " addr:" + target.getAddress() +
       " shutdown:" + channel.isShutdown() + " terminated:" + channel.isTerminated() +
       " server channel count:" + serverChannelCount.get());
