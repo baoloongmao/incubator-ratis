@@ -55,29 +55,30 @@ public class TestMetaServer {
     static AtomicInteger createCount = new AtomicInteger();
     static AtomicInteger deleteCount = new AtomicInteger();
     static AtomicInteger listCount = new AtomicInteger();
-    LogServiceClient client = new LogServiceClient(cluster.getMetaIdentity()){
-        @Override public LogStream createLog(LogName logName) throws IOException {
-            createCount.incrementAndGet();
-            return super.createLog(logName);
-        }
-
-        @Override public void deleteLog(LogName logName) throws IOException {
-            deleteCount.incrementAndGet();
-            super.deleteLog(logName);
-        }
-
-        @Override public List<LogInfo> listLogs() throws IOException {
-            listCount.incrementAndGet();
-            return super.listLogs();
-        }
-
-    };
+    static LogServiceClient client = null;
     @BeforeClass
     public static void beforeClass() {
         cluster = new LogServiceCluster(3);
         cluster.createWorkers(3);
         workers = cluster.getWorkers();
         assert(workers.size() == 3);
+        client = new LogServiceClient(cluster.getMetaIdentity()){
+            @Override public LogStream createLog(LogName logName) throws IOException {
+                createCount.incrementAndGet();
+                return super.createLog(logName);
+            }
+
+            @Override public void deleteLog(LogName logName) throws IOException {
+                deleteCount.incrementAndGet();
+                super.deleteLog(logName);
+            }
+
+            @Override public List<LogInfo> listLogs() throws IOException {
+                listCount.incrementAndGet();
+                return super.listLogs();
+            }
+
+        };
     }
 
     @AfterClass
