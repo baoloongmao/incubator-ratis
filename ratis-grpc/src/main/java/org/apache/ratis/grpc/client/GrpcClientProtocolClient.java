@@ -78,7 +78,7 @@ public class GrpcClientProtocolClient implements Closeable {
   private final Supplier<String> name;
   private final RaftPeer target;
   private final ManagedChannel channel;
-
+  private static Map<Integer, Integer> channels = new ConcurrentHashMap<>();
   private final TimeDuration requestTimeoutDuration;
   private final TimeDuration watchRequestTimeoutDuration;
   private final TimeoutScheduler scheduler = TimeoutScheduler.getInstance();
@@ -128,8 +128,9 @@ public class GrpcClientProtocolClient implements Closeable {
         .maxInboundMessageSize(maxMessageSize.getSizeInt())
         .build();
     clientChannelCount.incrementAndGet();
+    channels.put(channel.hashCode(), channel.hashCode());
     System.out.println("grpc create client this:" + this.hashCode() +
-            " client channel count:" + clientChannelCount.get());
+            " client channel count:" + clientChannelCount.get() + " channels:" + getChannels());
     blockingStub = RaftClientProtocolServiceGrpc.newBlockingStub(channel);
     asyncStub = RaftClientProtocolServiceGrpc.newStub(channel);
     adminBlockingStub = AdminProtocolServiceGrpc.newBlockingStub(channel);
@@ -142,11 +143,23 @@ public class GrpcClientProtocolClient implements Closeable {
     return name.get();
   }
 
+  String getChannels() {
+    String str = "";
+    for (Integer key : channels.keySet()) {
+      str = str + "," + key;
+    }
+    return str;
+  }
+
   @Override
   public void close() {
     Optional.ofNullable(orderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
     Optional.ofNullable(unorderedStreamObservers.getAndSet(null)).ifPresent(AsyncStreamObservers::close);
     GrpcUtil.shutdownManagedChannel(channel);
+    clientChannelCount.decrementAndGet();
+    channels.remove(channel.hashCode());
+    System.out.println("grpc close client this:" + this.hashCode() +
+            " client channel count:" + clientChannelCount.get());
     scheduler.close();
   }
 

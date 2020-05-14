@@ -83,6 +83,7 @@ public class PeerProxyMap<PROXY extends Closeable> implements Closeable {
 
   private final String name;
   private final Map<RaftPeerId, PeerAndProxy> peers = new ConcurrentHashMap<>();
+  public final static Map<Integer, Map<Integer, Integer>> proxyMap = new ConcurrentHashMap<>();
   private final Object resetLock = new Object();
 
   private final CheckedFunction<RaftPeer, PROXY, IOException> createProxy;
@@ -90,11 +91,29 @@ public class PeerProxyMap<PROXY extends Closeable> implements Closeable {
   public PeerProxyMap(String name, CheckedFunction<RaftPeer, PROXY, IOException> createProxy) {
     this.name = name;
     this.createProxy = createProxy;
+    proxyMap.put(this.hashCode(), new ConcurrentHashMap<>());
+    //printCallStatck("wangjie PeerProxyMap create:" + this.hashCode());
   }
 
   public PeerProxyMap(String name) {
     this.name = name;
     this.createProxy = this::createProxyImpl;
+    proxyMap.put(this.hashCode(), new ConcurrentHashMap<>());
+    //printCallStatck("wangjie PeerProxyMap create:" + this.hashCode());
+  }
+
+  public void printCallStatck(String str) {
+    Throwable ex = new Throwable();
+    StackTraceElement[] stackElements = ex.getStackTrace();
+    if (stackElements != null) {
+      for (int i = 0; i < stackElements.length; i++) {
+        System.err.println(str + ": "
+                + stackElements[i].getClassName()+ "|"
+                + stackElements[i].getFileName()+"|"
+                + stackElements[i].getLineNumber()+"|"
+                + stackElements[i].getMethodName());
+      }
+    }
   }
 
   public PROXY getProxy(RaftPeerId id) throws IOException {
@@ -116,7 +135,14 @@ public class PeerProxyMap<PROXY extends Closeable> implements Closeable {
   }
 
   public void computeIfAbsent(RaftPeer p) {
-    peers.computeIfAbsent(p.getId(), k -> new PeerAndProxy(p));
+    peers.computeIfAbsent(p.getId(), k -> {
+      PeerAndProxy pp = new PeerAndProxy(p);
+      try {
+        proxyMap.get(this.hashCode()).put(pp.getProxy().hashCode(), pp.getProxy().hashCode());
+      } catch (Exception e) {
+      }
+      return pp;
+    });
   }
 
   public void resetProxy(RaftPeerId id) {
@@ -150,17 +176,39 @@ public class PeerProxyMap<PROXY extends Closeable> implements Closeable {
 
   @Override
   public void close() {
+    Integer hashcode = this.hashCode();
+    proxyMap.remove(hashcode);
     peers.values().parallelStream().forEach(
         pp -> pp.setNullProxyAndClose().ifPresent(proxy -> closeProxy(proxy, pp)));
   }
 
   private void closeProxy(PROXY proxy, PeerAndProxy pp) {
     try {
+      System.err.println("wangjie PeerProxyMap closeProxy:" + this.hashCode() +
+              " proxy:" + proxy.hashCode());
       LOG.debug("{}: Closing proxy for peer {}", name, pp);
+      if (proxyMap.containsKey(this.hashCode())) {
+        proxyMap.get(this.hashCode()).remove(proxy.hashCode());
+      }
       proxy.close();
     } catch (IOException e) {
       LOG.warn("{}: Failed to close proxy for peer {}, proxy class: {}",
           name, pp, proxy.getClass(), e);
     }
+  }
+
+  public static String getProxyMap() {
+    int hashCode = proxyMap.hashCode();
+    String str = "proxyMap:" + hashCode;
+    for (Integer key : proxyMap.keySet()) {
+      if (key != null && proxyMap != null && proxyMap.get(key) != null) {
+        String str2 = "";
+        for (Integer key2 : proxyMap.get(key).keySet()) {
+          str2 = str2 + "," + key2;
+        }
+        str = str + ", PeerProxyMap:" + key + " proxy:" + str2;
+      }
+    }
+    return str;
   }
 }

@@ -30,12 +30,9 @@ import org.apache.ratis.logservice.util.TestUtils;
 import org.apache.ratis.metrics.JVMMetrics;
 import org.apache.ratis.server.impl.RaftServerImpl;
 import org.apache.ratis.server.impl.RaftServerProxy;
+import org.apache.ratis.util.PeerProxyMap;
 import org.apache.ratis.util.TimeDuration;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,6 +111,9 @@ public class TestMetaServer {
         }
     }
 
+    @After
+    public void after() {
+    }
     /**
      * Simple test for create a new log and get it.
      * @throws IOException
