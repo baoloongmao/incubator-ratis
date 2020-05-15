@@ -545,6 +545,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
       }
 
       // put the request into the pending queue
+      System.err.println("wangjie appendTransaction:" + request.hashCode() + " request:" + request);
       pending = leaderState.addPendingRequest(permit, request, context);
       if (pending == null) {
         cacheEntry.failWithException(new ResourceUnavailableException(
