@@ -292,6 +292,7 @@ public final class RaftClientImpl implements RaftClient {
     while (true) {
       final RaftClientRequest request = pending.newRequest();
       IOException ioe = null;
+      Exception e2 = null;
       try {
         final RaftClientReply reply = sendRequest(request);
 
@@ -302,9 +303,11 @@ public final class RaftClientImpl implements RaftClient {
         throw e;
       } catch (IOException e) {
         ioe = e;
+      } catch (Exception e) {
+        e2 = e;
       }
 
-      System.err.println("wangjie sendRequestWithRetry request:" + request + " exception:" + ioe);
+      System.err.println("wangjie sendRequestWithRetry request:" + request + " ioexception:" + ioe + " exception:" + e2);
       pending.incrementExceptionCount(ioe);
       ClientRetryEvent event = new ClientRetryEvent(request, ioe, pending);
       final RetryPolicy.Action action = retryPolicy.handleAttemptFailure(event);
