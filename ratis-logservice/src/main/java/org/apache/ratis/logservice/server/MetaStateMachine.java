@@ -301,6 +301,7 @@ public class MetaStateMachine extends BaseStateMachine {
                         .build()
                         .toByteString()));
             }
+            System.err.println("wangjie processCreateLogRequest 1 name:" + name.getName());
             // Check that we have at least 3 nodes
             if (avail.size() < 3) {
                 return CompletableFuture.completedFuture(Message.valueOf(MetaServiceProtoUtil
@@ -317,6 +318,7 @@ public class MetaStateMachine extends BaseStateMachine {
                     pg.getGroups().add(raftGroup);
                     avail.add(pg);
                 });
+                System.err.println("wangjie processCreateLogRequest 2 name:" + name.getName());
                 int provisionedPeers = 0;
                 Exception originalException = null;
                 for (RaftPeer peer : peers) {
@@ -331,6 +333,7 @@ public class MetaStateMachine extends BaseStateMachine {
                     }
                     provisionedPeers++;
                 }
+                System.err.println("wangjie processCreateLogRequest 3 name:" + name.getName());
                 // If we fail to add the group on all three peers, try to remove the group(s) which
                 // failed to be added.
                 if (provisionedPeers != peers.size()) {
@@ -353,6 +356,7 @@ public class MetaStateMachine extends BaseStateMachine {
                         MetaServiceProtoUtil.toCreateLogExceptionReplyProto(originalException)
                             .build().toByteString()));
                 }
+                System.err.println("wangjie processCreateLogRequest 4 name:" + name.getName());
                 try (RaftClient client = RaftClient.newBuilder().setRaftGroup(currentGroup)
                     .setClientId(ClientId.randomId()).setProperties(properties).build()){
                     client.send(() -> MetaServiceProtos.MetaSMRequestProto.newBuilder()
@@ -369,6 +373,7 @@ public class MetaStateMachine extends BaseStateMachine {
                         MetaServiceProtoUtil.toCreateLogExceptionReplyProto(e).build()
                             .toByteString()));
                 }
+                System.err.println("wangjie processCreateLogRequest 5 name:" + name.getName());
                 return CompletableFuture.completedFuture(Message.valueOf(MetaServiceProtoUtil
                         .toCreateLogReplyProto(new LogInfo((name), raftGroup)).build().toByteString()));
             }
