@@ -307,7 +307,7 @@ public final class RaftClientImpl implements RaftClient {
         e2 = e;
       }
 
-      System.err.println("wangjie sendRequestWithRetry request:" + request + " ioexception:" + ioe + " exception:" + e2);
+      System.err.println("wangjie sendRequestWithRetry request:" + request.getMessage().getContent().toString() + " ioexception:" + ioe + " exception:" + e2);
       pending.incrementExceptionCount(ioe);
       ClientRetryEvent event = new ClientRetryEvent(request, ioe, pending);
       final RetryPolicy.Action action = retryPolicy.handleAttemptFailure(event);
