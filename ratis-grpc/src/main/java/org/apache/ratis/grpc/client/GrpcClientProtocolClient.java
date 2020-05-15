@@ -137,6 +137,8 @@ public class GrpcClientProtocolClient implements Closeable {
     this.requestTimeoutDuration = RaftClientConfigKeys.Rpc.requestTimeout(properties);
     this.watchRequestTimeoutDuration =
         RaftClientConfigKeys.Rpc.watchRequestTimeout(properties);
+    System.out.println("grpc create client finish this:" + this.hashCode() +
+            " client channel count:" + clientChannelCount.get() + " channels:" + getChannels());
   }
 
   String getName() {

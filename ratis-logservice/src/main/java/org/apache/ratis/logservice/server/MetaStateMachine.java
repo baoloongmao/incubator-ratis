@@ -333,7 +333,7 @@ public class MetaStateMachine extends BaseStateMachine {
                     }
                     provisionedPeers++;
                 }
-                System.err.println("wangjie processCreateLogRequest 3 name:" + name.getName());
+                System.err.println("wangjie processCreateLogRequest 3 name:" + name.getName() + " peers:" + peers.size());
                 // If we fail to add the group on all three peers, try to remove the group(s) which
                 // failed to be added.
                 if (provisionedPeers != peers.size()) {
