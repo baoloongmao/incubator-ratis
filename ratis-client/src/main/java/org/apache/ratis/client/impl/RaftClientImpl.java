@@ -338,7 +338,7 @@ public final class RaftClientImpl implements RaftClient {
     LOG.debug("{}: send {}", clientId, request);
     RaftClientReply reply;
     try {
-      System.err.println("wangjie begin sendRequest:" + request.hashCode());
+      System.err.println("wangjie begin sendRequest:" + request.hashCode() + " request:" + request);
       reply = clientRpc.sendRequest(request);
     } catch (GroupMismatchException gme) {
       throw gme;

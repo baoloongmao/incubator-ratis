@@ -559,6 +559,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
   @Override
   public CompletableFuture<RaftClientReply> submitClientRequestAsync(
       RaftClientRequest request) throws IOException {
+    System.err.println("wangjie submitClientRequestAsync:" + request.hashCode() + " request:" + request);
     assertLifeCycleState(LifeCycle.States.RUNNING);
     LOG.debug("{}: receive client request({})", getMemberId(), request);
     Timer timer = raftServerMetrics.getClientRequestTimer(request);

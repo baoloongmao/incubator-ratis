@@ -128,6 +128,7 @@ public class GrpcClientRpc extends RaftClientRpcWithProxy<GrpcClientProtocolClie
         toRaftClientRequestProto(request);
     final CompletableFuture<RaftClientReplyProto> replyFuture = new CompletableFuture<>();
     // create a new grpc stream for each non-async call.
+    System.err.println("wangjie GrpcClientRpc sendRequest:" + request.hashCode() + " request:" + request);
     final StreamObserver<RaftClientRequestProto> requestObserver =
         proxy.orderedWithTimeout(new StreamObserver<RaftClientReplyProto>() {
           @Override

@@ -278,6 +278,7 @@ public class GrpcClientProtocolService extends RaftClientProtocolServiceImplBase
 
     @Override
     void processClientRequest(RaftClientRequest request) {
+      System.err.println("wangjie processClientRequest request:" + request.hashCode() + " request:" + request);
       final CompletableFuture<Void> f = processClientRequest(request, reply -> {
         if (!reply.isSuccess()) {
           LOG.info("Failed " + request + ", reply=" + reply);

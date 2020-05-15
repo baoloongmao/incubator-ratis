@@ -185,8 +185,8 @@ public class PeerProxyMap<PROXY extends Closeable> implements Closeable {
 
   private void closeProxy(PROXY proxy, PeerAndProxy pp) {
     try {
-      System.err.println("wangjie PeerProxyMap closeProxy:" + this.hashCode() +
-              " proxy:" + proxy.hashCode() + " thread:" + Thread.currentThread().getId());
+//      System.err.println("wangjie PeerProxyMap closeProxy:" + this.hashCode() +
+//              " proxy:" + proxy.hashCode() + " thread:" + Thread.currentThread().getId());
       //printCallStatck("wangjie closeProxy:");
       LOG.debug("{}: Closing proxy for peer {}", name, pp);
       if (proxyMap.containsKey(this.hashCode())) {

@@ -129,16 +129,14 @@ public class GrpcClientProtocolClient implements Closeable {
         .build();
     clientChannelCount.incrementAndGet();
     channels.put(channel.hashCode(), channel.hashCode());
-    System.out.println("grpc create client this:" + this.hashCode() +
-            " client channel count:" + clientChannelCount.get() + " channels:" + getChannels());
+//    System.out.println("grpc create client this:" + this.hashCode() +
+//            " client channel count:" + clientChannelCount.get() + " channels:" + getChannels());
     blockingStub = RaftClientProtocolServiceGrpc.newBlockingStub(channel);
     asyncStub = RaftClientProtocolServiceGrpc.newStub(channel);
     adminBlockingStub = AdminProtocolServiceGrpc.newBlockingStub(channel);
     this.requestTimeoutDuration = RaftClientConfigKeys.Rpc.requestTimeout(properties);
     this.watchRequestTimeoutDuration =
         RaftClientConfigKeys.Rpc.watchRequestTimeout(properties);
-    System.out.println("grpc create client finish this:" + this.hashCode() +
-            " client channel count:" + clientChannelCount.get() + " channels:" + getChannels());
   }
 
   String getName() {
@@ -160,8 +158,8 @@ public class GrpcClientProtocolClient implements Closeable {
     GrpcUtil.shutdownManagedChannel(channel);
     clientChannelCount.decrementAndGet();
     channels.remove(channel.hashCode());
-    System.out.println("grpc close client this:" + this.hashCode() +
-            " client channel count:" + clientChannelCount.get());
+//    System.out.println("grpc close client this:" + this.hashCode() +
+//            " client channel count:" + clientChannelCount.get());
     scheduler.close();
   }
 
