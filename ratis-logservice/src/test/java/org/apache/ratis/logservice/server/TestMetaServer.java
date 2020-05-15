@@ -114,6 +114,7 @@ public class TestMetaServer {
     @After
     public void after() {
     }
+
     /**
      * Simple test for create a new log and get it.
      * @throws IOException
@@ -127,6 +128,8 @@ public class TestMetaServer {
         try (LogStream logStream2 = client.getLog(LogName.of("testCreateLog"))) {
             assertNotNull(logStream2);
         }
+        System.err.println("wangjie jmxCount testCreateAndGetLog createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.LISTLOGS.name()));
     }
 
     /**
@@ -159,6 +162,8 @@ public class TestMetaServer {
                 cluster.createWorkers(1);
             }
         }
+        System.err.println("wangjie jmxCount testCloseLogOnNodeFailure createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.LISTLOGS.name()));
     }
 
     @Test
@@ -184,6 +189,8 @@ public class TestMetaServer {
             ByteBuffer res = reader.readNext();
             assert (res.array().length > 0);
         }
+        System.err.println("wangjie jmxCount testReadWritetoLog createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.LISTLOGS.name()));
     }
 
     @Test
@@ -220,6 +227,8 @@ public class TestMetaServer {
             data = reader.readBulk(records.size());
             assertEquals(records.size(), data.size());
         }
+        System.err.println("wangjie jmxCount testLogArchival createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.LISTLOGS.name()));
     }
 
     @Test
@@ -267,6 +276,8 @@ public class TestMetaServer {
             reader.close();
             writer.close();
         }
+        System.err.println("wangjie jmxCount testLogExport createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.LISTLOGS.name()));
     }
 
     boolean deleteLocalDirectory(File dir) {
@@ -305,6 +316,8 @@ public class TestMetaServer {
                 }
             }
         }
+        System.err.println("wangjie jmxCount testDeleteLog createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.LISTLOGS.name()));
     }
     /**
      * Test for getting not existing log. Should throw an exception
@@ -323,6 +336,8 @@ public class TestMetaServer {
                logStream.close();
             }
         }
+        System.err.println("wangjie jmxCount testGetNotExistingLog createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.LISTLOGS.name()));
     }
 
     /**
@@ -345,6 +360,8 @@ public class TestMetaServer {
                 }
             }
         }
+        System.err.println("wangjie jmxCount testAlreadyExistLog createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.LISTLOGS.name()));
     }
 
     private void createLogAndClose(String name) throws Exception {
@@ -377,6 +394,8 @@ public class TestMetaServer {
         testJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name(),
             (long) createCount.get() );
         testJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.LISTLOGS.name(),listCount.longValue());
+        System.err.println("wangjie jmxCount testListLogs createCount:" + createCount.get() +
+            " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.LISTLOGS.name()));
         assert(list.stream().filter(log -> log.getLogName().getName().startsWith("listLogTest")).count() == 7);
 
     }
@@ -430,6 +449,8 @@ public class TestMetaServer {
         });
         list = client.listLogs();
         assert(list.size() == 0);
-
+        System.err.println("wangjie jmxCount testAlreadyExistLog createCount:" + createCount.get() +
+                " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.LISTLOGS.name()));
     }
+
 }

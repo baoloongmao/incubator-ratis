@@ -221,6 +221,13 @@ public class MetaStateMachine extends BaseStateMachine {
                 e.printStackTrace();
             }
             type = req.getTypeCase();
+
+            if (type == MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG) {
+                CreateLogRequestProto createLog = req.getCreateLog();
+                LogName name = LogServiceProtoUtil.toLogName(createLog.getLogName());
+                System.err.println("wangjie MetaStateMachine create log name:" + name.getName());
+            }
+            
             timerContext = metricRegistry.timer(type.name()).time();
             switch (type) {
 
