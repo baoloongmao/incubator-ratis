@@ -232,21 +232,23 @@ public abstract class ServerRestartTests<CLUSTER extends MiniRaftCluster>
   void runTestRestartCommitIndex(MiniRaftCluster cluster) throws Exception {
     final SimpleMessage[] messages = SimpleMessage.create(100);
     final List<CompletableFuture<Void>> futures = new ArrayList<>(messages.length);
-    for(int i = 0; i < messages.length; i++) {
-      final CompletableFuture<Void> f = new CompletableFuture<>();
-      futures.add(f);
+    try (final RaftClient client = cluster.createClient()) {
+      for (int i = 0; i < messages.length; i++) {
+        final CompletableFuture<Void> f = new CompletableFuture<>();
+        futures.add(f);
 
-      final SimpleMessage m = messages[i];
-      new Thread(() -> {
-        try (final RaftClient client = cluster.createClient()) {
-          Assert.assertTrue(client.send(m).isSuccess());
-        } catch (IOException e) {
-          throw new IllegalStateException("Failed to send " + m, e);
-        }
-        f.complete(null);
-      }).start();
+        final SimpleMessage m = messages[i];
+        new Thread(() -> {
+          try {
+            Assert.assertTrue(client.send(m).isSuccess());
+          } catch (IOException e) {
+            throw new IllegalStateException("Failed to send " + m, e);
+          }
+          f.complete(null);
+        }).start();
+      }
+      JavaUtils.allOf(futures).get();
     }
-    JavaUtils.allOf(futures).get();
 
     final List<RaftPeerId> ids = new ArrayList<>();
     final RaftServerImpl leader = cluster.getLeader();
