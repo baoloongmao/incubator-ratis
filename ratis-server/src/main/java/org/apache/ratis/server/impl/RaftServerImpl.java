@@ -560,7 +560,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
   @Override
   public CompletableFuture<RaftClientReply> submitClientRequestAsync(
       RaftClientRequest request) throws IOException {
-    System.err.println("wangjie submitClientRequestAsync:" + request.hashCode() + " request:" + request);
+    System.err.println("wangjie submitClientRequestAsync 1:" + request.hashCode() + " request:" + request);
     assertLifeCycleState(LifeCycle.States.RUNNING);
     LOG.debug("{}: receive client request({})", getMemberId(), request);
     Timer timer = raftServerMetrics.getClientRequestTimer(request);
@@ -575,6 +575,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
       if (reply != null) {
         return reply;
       }
+      System.err.println("wangjie submitClientRequestAsync 2:" + request.hashCode() + " request:" + request);
       // let the state machine handle read-only request from client
       RaftClientRequest.Type type = request.getType();
       if (type.is(RaftClientRequestProto.TypeCase.STREAM)) {
@@ -587,7 +588,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
           type = request.getType();
         }
       }
-
+      System.err.println("wangjie submitClientRequestAsync 3:" + request.hashCode() + " request:" + request);
       if (type.is(RaftClientRequestProto.TypeCase.READ)) {
         // TODO: We might not be the leader anymore by the time this completes.
         // See the RAFT paper section 8 (last part)
@@ -597,6 +598,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
       } else if (type.is(RaftClientRequestProto.TypeCase.STREAM)) {
         replyFuture = streamAsync(request);
       } else {
+        System.err.println("wangjie submitClientRequestAsync 4:" + request.hashCode() + " request:" + request);
         // query the retry cache
         RetryCache.CacheQueryResult previousResult = retryCache.queryCache(
             request.getClientId(), request.getCallId());
@@ -606,7 +608,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
           replyFuture = previousResult.getEntry().getReplyFuture();
         } else {
           final RetryCache.CacheEntry cacheEntry = previousResult.getEntry();
-
+          System.err.println("wangjie submitClientRequestAsync 5:" + request.hashCode() + " request:" + request);
           // TODO: this client request will not be added to pending requests until
           // later which means that any failure in between will leave partial state in
           // the state machine. We should call cancelTransaction() for failed requests
@@ -616,8 +618,10 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
                 new StateMachineException(getMemberId(), context.getException()), getCommitInfos());
             cacheEntry.failWithReply(exceptionReply);
             replyFuture =  CompletableFuture.completedFuture(exceptionReply);
+            System.err.println("wangjie submitClientRequestAsync 6:" + request.hashCode() + " request:" + request);
           } else {
             replyFuture = appendTransaction(request, context, cacheEntry);
+            System.err.println("wangjie submitClientRequestAsync 7:" + request.hashCode() + " request:" + request);
           }
         }
       }
