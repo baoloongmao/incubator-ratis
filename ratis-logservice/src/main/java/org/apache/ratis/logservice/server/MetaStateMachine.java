@@ -325,6 +325,7 @@ public class MetaStateMachine extends BaseStateMachine {
                     try (RaftClient client = RaftClient.newBuilder().setProperties(properties)
                         .setRaftGroup(RaftGroup.valueOf(logServerGroupId, peer)).build()) {
                         client.groupAdd(raftGroup, peer.getId());
+                        System.err.println("wangjie processCreateLogRequest 2 name:" + name.getName() + " peer:" + peer.getId() + " group:" + raftGroup.getGroupId());
                     } catch (IOException e) {
                         LOG.error("Failed to add Raft group ({}) for new Log({})",
                             raftGroup.getGroupId(), name, e);
