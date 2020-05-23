@@ -61,9 +61,12 @@ public class AtomicFileOutputStream extends FilterOutputStream {
   public void close() throws IOException {
     boolean triedToClose = false, success = false;
     try {
+      System.err.println("wangjie Atomic close 1 thread:" + Thread.currentThread().getId());
       flush();
-      ((FileOutputStream)out).getChannel().force(true);
-
+      System.err.println("wangjie Atomic close 2 thread:" + Thread.currentThread().getId());
+      //((FileOutputStream)out).getChannel().force(true);
+      ((FileOutputStream)out).getChannel().force(false);
+      System.err.println("wangjie Atomic close 3 thread:" + Thread.currentThread().getId());
       triedToClose = true;
       super.close();
       success = true;
@@ -87,6 +90,7 @@ public class AtomicFileOutputStream extends FilterOutputStream {
           LOG.warn("Unable to delete tmp file " + tmpFile);
         }
       }
+      System.err.println("wangjie Atomic close 4 thread:" + Thread.currentThread().getId());
     }
   }
 
