@@ -31,6 +31,7 @@ import java.util.stream.StreamSupport;
 
 import com.codahale.metrics.Timer;
 import org.apache.ratis.client.RaftClient;
+import org.apache.ratis.client.RaftClientConfigKeys;
 import org.apache.ratis.conf.RaftProperties;
 import org.apache.ratis.logservice.api.LogInfo;
 import org.apache.ratis.logservice.api.LogName;
@@ -115,6 +116,7 @@ public class MetaStateMachine extends BaseStateMachine {
       this.failureDetectionPeriod = failureDetectionPeriod;
       if (properties != null) {
           RaftServerConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
+          RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
       }
     }
 
@@ -128,6 +130,7 @@ public class MetaStateMachine extends BaseStateMachine {
         peerHealthChecker.start();
         if (properties != null) {
             RaftServerConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
+            RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
         }
     }
 
