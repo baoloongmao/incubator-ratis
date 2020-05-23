@@ -136,7 +136,7 @@ public class GrpcClientProtocolClient implements Closeable {
     asyncStub = RaftClientProtocolServiceGrpc.newStub(channel);
     adminBlockingStub = AdminProtocolServiceGrpc.newBlockingStub(channel);
     //this.requestTimeoutDuration = RaftClientConfigKeys.Rpc.requestTimeout(properties);
-    this.requestTimeoutDuration = TimeDuration.valueOf(15000, TimeUnit.MICROSECONDS);
+    this.requestTimeoutDuration = TimeDuration.valueOf(15000, TimeUnit.MILLISECONDS);
     this.watchRequestTimeoutDuration =
         RaftClientConfigKeys.Rpc.watchRequestTimeout(properties);
   }
