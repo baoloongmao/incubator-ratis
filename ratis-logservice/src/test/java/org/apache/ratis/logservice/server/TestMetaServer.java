@@ -28,6 +28,7 @@ import org.apache.ratis.logservice.proto.MetaServiceProtos;
 import org.apache.ratis.logservice.util.LogServiceCluster;
 import org.apache.ratis.logservice.util.TestUtils;
 import org.apache.ratis.metrics.JVMMetrics;
+import org.apache.ratis.server.RaftServerConfigKeys;
 import org.apache.ratis.server.impl.RaftServerImpl;
 import org.apache.ratis.server.impl.RaftServerProxy;
 import org.apache.ratis.util.PeerProxyMap;
@@ -86,6 +87,7 @@ public class TestMetaServer {
                 return super.listLogs();
             }
         };
+        RaftServerConfigKeys.Rpc.setRequestTimeout(p, FIVE_SECONDS);
     }
 
     @AfterClass

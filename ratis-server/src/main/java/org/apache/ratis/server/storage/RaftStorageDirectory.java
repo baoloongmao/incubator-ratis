@@ -334,7 +334,7 @@ public class RaftStorageDirectory {
       deletionHookAdded = true;
     }
     System.err.println("this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " tryLock begin 2");
-    RandomAccessFile file = new RandomAccessFile(lockF, "rw");
+    RandomAccessFile file = new RandomAccessFile(lockF, "rws");
     System.err.println("this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " tryLock begin 3");
     String jvmName = ManagementFactory.getRuntimeMXBean().getName();
     FileLock res;
