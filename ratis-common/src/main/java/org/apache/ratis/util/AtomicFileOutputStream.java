@@ -65,7 +65,7 @@ public class AtomicFileOutputStream extends FilterOutputStream {
       flush();
       System.err.println("wangjie Atomic close 2 thread:" + Thread.currentThread().getId());
       //((FileOutputStream)out).getChannel().force(true);
-      ((FileOutputStream)out).getChannel().force(false);
+      //((FileOutputStream)out).getChannel().force(false);
       System.err.println("wangjie Atomic close 3 thread:" + Thread.currentThread().getId());
       triedToClose = true;
       super.close();
