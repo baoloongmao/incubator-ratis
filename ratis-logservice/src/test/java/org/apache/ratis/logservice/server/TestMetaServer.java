@@ -19,6 +19,7 @@
 package org.apache.ratis.logservice.server;
 
 import org.apache.ratis.client.RaftClientConfigKeys;
+import org.apache.ratis.conf.RaftProperties;
 import org.apache.ratis.logservice.api.*;
 import org.apache.ratis.logservice.api.LogStream.State;
 import org.apache.ratis.logservice.api.LogServiceClient;
@@ -74,7 +75,10 @@ public class TestMetaServer {
         cluster.createWorkers(3);
         workers = cluster.getWorkers();
         assert(workers.size() == 3);
-        client = new LogServiceClient(cluster.getMetaIdentity()){
+        RaftProperties properties = new RaftProperties();
+        RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
+
+        client = new LogServiceClient(cluster.getMetaIdentity(), properties){
             @Override public LogStream createLog(LogName logName) throws IOException {
                 createCount.incrementAndGet();
                 return super.createLog(logName);
