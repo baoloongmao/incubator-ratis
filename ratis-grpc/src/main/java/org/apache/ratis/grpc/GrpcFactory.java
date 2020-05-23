@@ -113,9 +113,9 @@ public class GrpcFactory implements ServerFactory, ClientFactory {
     if (properties != null) {
       long dur = RaftClientConfigKeys.Rpc.requestTimeout(properties).getDuration();
       if (dur != 15) {
-        printCallStatck("wangjie new newRaftClientRpc dur:" + dur);
+        printCallStatck("wangjie new newRaftClientRpc dur:" + dur + " unit:" + RaftClientConfigKeys.Rpc.requestTimeout(properties).toString());
       }
-      //RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
+      RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
     }
     return new GrpcClientRpc(clientId, properties, getTlsConfig());
   }
