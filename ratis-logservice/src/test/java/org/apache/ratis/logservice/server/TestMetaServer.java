@@ -18,6 +18,7 @@
 
 package org.apache.ratis.logservice.server;
 
+import org.apache.ratis.client.RaftClientConfigKeys;
 import org.apache.ratis.logservice.api.*;
 import org.apache.ratis.logservice.api.LogStream.State;
 import org.apache.ratis.logservice.api.LogServiceClient;
@@ -40,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -66,7 +68,8 @@ public class TestMetaServer {
     static LogServiceClient client = null;
 
     @BeforeClass
-    public static void beforeClass() {
+    public static void beforeClass() throws NoSuchFieldException {
+        //Field f = RaftClientConfigKeys.Rpc.class.getDeclaredField("REQUEST_TIMEOUT_DEFAULT");
         cluster = new LogServiceCluster(3);
         cluster.createWorkers(3);
         workers = cluster.getWorkers();

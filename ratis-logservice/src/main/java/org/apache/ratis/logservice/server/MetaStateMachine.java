@@ -114,12 +114,12 @@ public class MetaStateMachine extends BaseStateMachine {
       this.metadataGroupId = metadataGroupId;
       this.logServerGroupId = logServerGroupId;
       this.failureDetectionPeriod = failureDetectionPeriod;
-        RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
+        //RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
     }
 
     @Override
     public void initialize(RaftServer server, RaftGroupId groupId, RaftStorage storage) throws IOException {
-        RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
+        //RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
         this.raftServer = server;
         this.metricRegistry = LogServiceMetricsRegistry
             .createMetricRegistryForLogServiceMetaData(server.getId().toString());
@@ -298,7 +298,7 @@ public class MetaStateMachine extends BaseStateMachine {
     private CompletableFuture<Message> processCreateLogRequest(
             MetaServiceProtos.MetaServiceRequestProto logServiceRequestProto) {
         LogName name;
-        RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
+        //RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
         try (AutoCloseableLock writeLock = writeLock()) {
             CreateLogRequestProto createLog = logServiceRequestProto.getCreateLog();
             name = LogServiceProtoUtil.toLogName(createLog.getLogName());
