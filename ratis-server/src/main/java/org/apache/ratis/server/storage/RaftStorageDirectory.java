@@ -276,11 +276,11 @@ public class RaftStorageDirectory {
       LOG.warn("Cannot access storage directory " + rootPath, ex);
       return StorageState.NON_EXISTENT;
     }
-    LOG.info("wangjie The storage directory 3 " + rootPath + " does not exist. Created");
+    LOG.info("wangjie The storage directory 3 " + rootPath + " does not exist. Created thread:" + Thread.currentThread().getId());
     if (toLock) {
       this.lock(); // lock storage if it exists
     }
-    LOG.info("wangjie The storage directory 4 " + rootPath + " does not exist. Created");
+    LOG.info("wangjie The storage directory 4 " + rootPath + " does not exist. Created thread:" + Thread.currentThread().getId());
     // check whether current directory is valid
     if (hasMetaFile()) {
       return StorageState.NORMAL;
@@ -327,21 +327,27 @@ public class RaftStorageDirectory {
    * @throws IOException if locking fails.
    */
   private FileLock tryLock(File lockF) throws IOException {
+    System.err.println("this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " tryLock begin 1");
     boolean deletionHookAdded = false;
     if (!lockF.exists()) {
       lockF.deleteOnExit();
       deletionHookAdded = true;
     }
+    System.err.println("this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " tryLock begin 2");
     RandomAccessFile file = new RandomAccessFile(lockF, "rws");
+    System.err.println("this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " tryLock begin 3");
     String jvmName = ManagementFactory.getRuntimeMXBean().getName();
     FileLock res;
     try {
+      System.err.println("this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " tryLock begin 4");
       res = file.getChannel().tryLock();
+      System.err.println("this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " tryLock begin 5");
       if (null == res) {
         LOG.error("Unable to acquire file lock on path " + lockF.toString());
         throw new OverlappingFileLockException();
       }
       file.write(jvmName.getBytes(StandardCharsets.UTF_8));
+      System.err.println("this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " tryLock begin 6");
       LOG.info("Lock on " + lockF + " acquired by nodename " + jvmName);
     } catch (OverlappingFileLockException oe) {
       // Cannot read from the locked file on Windows.
@@ -362,6 +368,7 @@ public class RaftStorageDirectory {
       // the dir, we can take care of cleaning it up.
       lockF.deleteOnExit();
     }
+    System.err.println("this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " tryLock begin 7");
     return res;
   }
 
