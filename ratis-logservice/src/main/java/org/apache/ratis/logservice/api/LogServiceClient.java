@@ -187,7 +187,7 @@ public class LogServiceClient implements AutoCloseable {
     private RaftClient getRaftClient(LogInfo logInfo) throws IOException {
 
         RaftProperties properties = new RaftProperties();
-        RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
+        //RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
         return RaftClient.newBuilder().setRaftGroup(logInfo.getRaftGroup()).setProperties(properties).build();
 
     }
