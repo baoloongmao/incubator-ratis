@@ -87,7 +87,6 @@ public class TestMetaServer {
                 return super.listLogs();
             }
         };
-        RaftServerConfigKeys.Rpc.setRequestTimeout(p, FIVE_SECONDS);
     }
 
     @AfterClass
