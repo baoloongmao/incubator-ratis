@@ -373,7 +373,7 @@ public class RaftStorageDirectory {
       // the dir, we can take care of cleaning it up.
       lockF.deleteOnExit();
     }
-    System.err.println("this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " tryLock begin 7");
+    System.err.println("this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " tryLock begin 8");
     return res;
   }
 

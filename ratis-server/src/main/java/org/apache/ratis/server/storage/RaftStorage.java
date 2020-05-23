@@ -79,8 +79,11 @@ public class RaftStorage implements Closeable {
   }
 
   private void format() throws IOException {
+    System.err.println("RaftStorage begin clearDirectory thread:" + Thread.currentThread().getId());
     storageDir.clearDirectory();
+    System.err.println("RaftStorage end clearDirectory thread:" + Thread.currentThread().getId());
     metaFile = writeMetaFile(MetaFile.DEFAULT_TERM, MetaFile.EMPTY_VOTEFOR);
+    System.err.println("RaftStorage end writeMetaFile thread:" + Thread.currentThread().getId());
     LOG.info("Storage directory " + storageDir.getRoot()
         + " has been successfully formatted.");
   }
@@ -98,6 +101,7 @@ public class RaftStorage implements Closeable {
   private StorageState analyzeAndRecoverStorage(boolean toLock)
       throws IOException {
     StorageState storageState = storageDir.analyzeStorage(toLock);
+    System.err.println("RaftStorage analyzeStorage end thread:" + Thread.currentThread().getId() + " storageState:" + storageState);
     if (storageState == StorageState.NORMAL) {
       metaFile = new MetaFile(storageDir.getMetaFile());
       Preconditions.assertTrue(metaFile.exists(),
@@ -109,7 +113,9 @@ public class RaftStorage implements Closeable {
       return StorageState.NORMAL;
     } else if (storageState == StorageState.NOT_FORMATTED &&
         storageDir.isCurrentEmpty()) {
+      System.err.println("RaftStorage begin format thread:" + Thread.currentThread().getId() + " storageState:" + storageState);
       format();
+      System.err.println("RaftStorage end format thread:" + Thread.currentThread().getId() + " storageState:" + storageState);
       return StorageState.NORMAL;
     } else {
       return storageState;
