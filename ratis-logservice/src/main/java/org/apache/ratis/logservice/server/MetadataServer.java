@@ -19,6 +19,7 @@
 package org.apache.ratis.logservice.server;
 
 import com.beust.jcommander.JCommander;
+import org.apache.ratis.client.RaftClientConfigKeys;
 import org.apache.ratis.conf.RaftProperties;
 import org.apache.ratis.logservice.api.LogServiceConfiguration;
 import org.apache.ratis.logservice.common.Constants;
@@ -29,6 +30,7 @@ import org.apache.ratis.server.RaftServerConfigKeys;
 import org.apache.ratis.statemachine.StateMachine;
 import org.apache.ratis.util.FileUtils;
 import org.apache.ratis.util.LifeCycle;
+import org.apache.ratis.util.TimeDuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.ratis.logservice.common.Constants.META_GROUP_ID;
 import static org.apache.ratis.logservice.util.LogServiceUtils.getPeersFromQuorum;
@@ -86,6 +89,10 @@ public class MetadataServer extends BaseServer {
 
         // Set properties common to all log service state machines
         setRaftProperties(properties);
+
+        RaftServerConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
+        RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
+        
         long failureDetectionPeriod = getConfig().
                 getLong(Constants.LOG_SERVICE_PEER_FAILURE_DETECTION_PERIOD_KEY,
                 Constants.DEFAULT_PEER_FAILURE_DETECTION_PERIOD);
