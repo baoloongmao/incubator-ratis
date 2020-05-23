@@ -92,7 +92,7 @@ public class MetadataServer extends BaseServer {
 
         RaftServerConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
         RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
-        
+
         long failureDetectionPeriod = getConfig().
                 getLong(Constants.LOG_SERVICE_PEER_FAILURE_DETECTION_PERIOD_KEY,
                 Constants.DEFAULT_PEER_FAILURE_DETECTION_PERIOD);
