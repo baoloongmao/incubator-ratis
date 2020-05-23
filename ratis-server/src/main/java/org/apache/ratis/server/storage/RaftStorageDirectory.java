@@ -260,12 +260,14 @@ public class RaftStorageDirectory {
       if (!root.exists()) {
         LOG.info("The storage directory " + rootPath + " does not exist. Creating ...");
         FileUtils.createDirectories(root);
+        LOG.info("The storage directory " + rootPath + " does not exist. Created");
       }
       // or is inaccessible
       if (!root.isDirectory()) {
         LOG.warn(rootPath + " is not a directory");
         return StorageState.NON_EXISTENT;
       }
+      LOG.info("wangjie The storage directory 2 " + rootPath + " does not exist. Created");
       if (!Files.isWritable(root.toPath())) {
         LOG.warn("The storage directory " + rootPath + " is not writable.");
         return StorageState.NON_EXISTENT;
@@ -274,11 +276,11 @@ public class RaftStorageDirectory {
       LOG.warn("Cannot access storage directory " + rootPath, ex);
       return StorageState.NON_EXISTENT;
     }
-
+    LOG.info("wangjie The storage directory 3 " + rootPath + " does not exist. Created");
     if (toLock) {
       this.lock(); // lock storage if it exists
     }
-
+    LOG.info("wangjie The storage directory 4 " + rootPath + " does not exist. Created");
     // check whether current directory is valid
     if (hasMetaFile()) {
       return StorageState.NORMAL;
