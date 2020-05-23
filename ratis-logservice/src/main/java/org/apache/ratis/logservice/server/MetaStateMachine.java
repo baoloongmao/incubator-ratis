@@ -296,6 +296,7 @@ public class MetaStateMachine extends BaseStateMachine {
     private CompletableFuture<Message> processCreateLogRequest(
             MetaServiceProtos.MetaServiceRequestProto logServiceRequestProto) {
         LogName name;
+        RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
         try (AutoCloseableLock writeLock = writeLock()) {
             CreateLogRequestProto createLog = logServiceRequestProto.getCreateLog();
             name = LogServiceProtoUtil.toLogName(createLog.getLogName());
