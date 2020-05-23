@@ -18,6 +18,7 @@
 package org.apache.ratis.logservice.api;
 
 import org.apache.ratis.client.RaftClient;
+import org.apache.ratis.client.RaftClientConfigKeys;
 import org.apache.ratis.conf.RaftProperties;
 import org.apache.ratis.logservice.api.LogStream.State;
 import org.apache.ratis.logservice.common.Constants;
@@ -30,10 +31,12 @@ import org.apache.ratis.logservice.server.ArchivalInfo;
 import org.apache.ratis.logservice.util.LogServiceProtoUtil;
 import org.apache.ratis.logservice.util.MetaServiceProtoUtil;
 import org.apache.ratis.protocol.*;
+import org.apache.ratis.util.TimeDuration;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.apache.ratis.logservice.util.LogServiceUtils.getPeersFromQuorum;
@@ -183,6 +186,7 @@ public class LogServiceClient implements AutoCloseable {
     private RaftClient getRaftClient(LogInfo logInfo) throws IOException {
 
         RaftProperties properties = new RaftProperties();
+        RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
         return RaftClient.newBuilder().setRaftGroup(logInfo.getRaftGroup()).setProperties(properties).build();
 
     }
