@@ -26,11 +26,14 @@ import org.apache.ratis.grpc.server.GrpcService;
 import org.apache.ratis.protocol.ClientId;
 import org.apache.ratis.rpc.SupportedRpcType;
 import org.apache.ratis.server.RaftServer;
+import org.apache.ratis.server.RaftServerConfigKeys;
 import org.apache.ratis.server.impl.*;
 import org.apache.ratis.thirdparty.io.netty.buffer.PooledByteBufAllocator;
+import org.apache.ratis.util.TimeDuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class GrpcFactory implements ServerFactory, ClientFactory {
@@ -92,6 +95,9 @@ public class GrpcFactory implements ServerFactory, ClientFactory {
   @Override
   public GrpcClientRpc newRaftClientRpc(ClientId clientId, RaftProperties properties) {
     checkPooledByteBufAllocatorUseCacheForAllThreads(LOG::debug);
+    if (properties != null) {
+      RaftServerConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
+    }
     return new GrpcClientRpc(clientId, properties, getTlsConfig());
   }
 }
