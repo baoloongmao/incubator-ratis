@@ -149,9 +149,7 @@ public class GrpcClientProtocolClient implements Closeable {
     blockingStub = RaftClientProtocolServiceGrpc.newBlockingStub(channel);
     asyncStub = RaftClientProtocolServiceGrpc.newStub(channel);
     adminBlockingStub = AdminProtocolServiceGrpc.newBlockingStub(channel);
-    //this.requestTimeoutDuration = RaftClientConfigKeys.Rpc.requestTimeout(properties);
-    printCallStatck("wangjie new GrpcClientProtocolClient");
-    this.requestTimeoutDuration = TimeDuration.valueOf(15000, TimeUnit.MILLISECONDS);
+    this.requestTimeoutDuration = RaftClientConfigKeys.Rpc.requestTimeout(properties);
     this.watchRequestTimeoutDuration =
         RaftClientConfigKeys.Rpc.watchRequestTimeout(properties);
   }

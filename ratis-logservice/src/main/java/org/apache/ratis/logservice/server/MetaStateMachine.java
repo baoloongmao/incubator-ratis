@@ -114,10 +114,6 @@ public class MetaStateMachine extends BaseStateMachine {
       this.metadataGroupId = metadataGroupId;
       this.logServerGroupId = logServerGroupId;
       this.failureDetectionPeriod = failureDetectionPeriod;
-      if (properties != null) {
-          RaftServerConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
-          RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
-      }
     }
 
     @Override
@@ -128,10 +124,6 @@ public class MetaStateMachine extends BaseStateMachine {
         super.initialize(server, groupId, storage);
         peerHealthChecker = new Daemon(new PeerHealthChecker(),"peer-Health-Checker");
         peerHealthChecker.start();
-        if (properties != null) {
-            RaftServerConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
-            RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
-        }
     }
 
     @Override
