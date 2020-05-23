@@ -93,10 +93,25 @@ public class GrpcFactory implements ServerFactory, ClientFactory {
         .build();
   }
 
+  public static void printCallStatck(String str) {
+    Throwable ex = new Throwable();
+    StackTraceElement[] stackElements = ex.getStackTrace();
+    if (stackElements != null) {
+      for (int i = 0; i < stackElements.length; i++) {
+        System.err.println(str + ": "
+                + stackElements[i].getClassName()+ "|"
+                + stackElements[i].getFileName()+"|"
+                + stackElements[i].getLineNumber()+"|"
+                + stackElements[i].getMethodName());
+      }
+    }
+  }
+
   @Override
   public GrpcClientRpc newRaftClientRpc(ClientId clientId, RaftProperties properties) {
     checkPooledByteBufAllocatorUseCacheForAllThreads(LOG::debug);
     if (properties != null) {
+      printCallStatck("wangjie new newRaftClientRpc");
       RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
     }
     return new GrpcClientRpc(clientId, properties, getTlsConfig());
