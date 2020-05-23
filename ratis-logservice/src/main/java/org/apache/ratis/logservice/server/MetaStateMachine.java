@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -55,12 +56,14 @@ import org.apache.ratis.protocol.*;
 
 
 import org.apache.ratis.server.RaftServer;
+import org.apache.ratis.server.RaftServerConfigKeys;
 import org.apache.ratis.server.storage.RaftStorage;
 import org.apache.ratis.statemachine.TransactionContext;
 import org.apache.ratis.statemachine.impl.BaseStateMachine;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.ratis.util.AutoCloseableLock;
 import org.apache.ratis.util.Daemon;
+import org.apache.ratis.util.TimeDuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,6 +113,9 @@ public class MetaStateMachine extends BaseStateMachine {
       this.metadataGroupId = metadataGroupId;
       this.logServerGroupId = logServerGroupId;
       this.failureDetectionPeriod = failureDetectionPeriod;
+      if (properties != null) {
+          RaftServerConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
+      }
     }
 
     @Override
@@ -120,6 +126,9 @@ public class MetaStateMachine extends BaseStateMachine {
         super.initialize(server, groupId, storage);
         peerHealthChecker = new Daemon(new PeerHealthChecker(),"peer-Health-Checker");
         peerHealthChecker.start();
+        if (properties != null) {
+            RaftServerConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
+        }
     }
 
     @Override
