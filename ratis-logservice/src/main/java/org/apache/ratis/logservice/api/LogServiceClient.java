@@ -71,6 +71,7 @@ public class LogServiceClient implements AutoCloseable {
     public LogServiceClient(String metaQuorum, LogServiceConfiguration config) {
         Set<RaftPeer> peers = getPeersFromQuorum(metaQuorum);
         RaftProperties properties = new RaftProperties();
+        RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
         RaftGroup meta = RaftGroup.valueOf(Constants.META_GROUP_ID, peers);
         client = RaftClient.newBuilder()
                 .setRaftGroup(meta)
