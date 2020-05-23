@@ -346,8 +346,13 @@ public class RaftStorageDirectory {
         LOG.error("Unable to acquire file lock on path " + lockF.toString());
         throw new OverlappingFileLockException();
       }
-      file.write(jvmName.getBytes(StandardCharsets.UTF_8));
+      byte[] name = jvmName.getBytes(StandardCharsets.UTF_8);
       System.err.println("this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " tryLock begin 6");
+      long start = System.currentTimeMillis();
+      file.write(name);
+      long end = System.currentTimeMillis();
+      System.err.println("this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() + " tryLock begin 7" +
+              " jvmName:" + jvmName + " cost:" + (end - start));
       LOG.info("Lock on " + lockF + " acquired by nodename " + jvmName);
     } catch (OverlappingFileLockException oe) {
       // Cannot read from the locked file on Windows.
