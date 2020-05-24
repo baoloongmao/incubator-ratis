@@ -297,9 +297,13 @@ public final class RaftClientImpl implements RaftClient {
         final RaftClientReply reply = sendRequest(request);
 
         if (reply != null) {
+          System.err.println("wangjie sendRequestWithRetry request:" + request.getMessage().getContent().toString() +
+                  " reply:" + reply);
           return reply;
         }
       } catch (GroupMismatchException | StateMachineException e) {
+        System.err.println("wangjie sendRequestWithRetry request:" + request.getMessage().getContent().toString() +
+                " exception:" + e.getMessage());
         throw e;
       } catch (IOException e) {
         ioe = e;
@@ -314,13 +318,17 @@ public final class RaftClientImpl implements RaftClient {
       TimeDuration sleepTime = getEffectiveSleepTime(ioe, action.getSleepTime());
 
       if (!action.shouldRetry()) {
+        System.err.println("wangjie sendRequestWithRetry request:" + request.getMessage().getContent().toString() +
+                " no more retry");
         throw (IOException)noMoreRetries(event);
       }
 
-      System.err.println("wangjie sendRequestWithRetry request:" + request.getMessage().getContent().toString() + " ioexception:" + ioe + " exception:" + e2);
+      System.err.println("wangjie sendRequestWithRetry request:" + request.getMessage().getContent().toString());
       try {
         sleepTime.sleep();
       } catch (InterruptedException e) {
+        System.err.println("wangjie sendRequestWithRetry request:" + request.getMessage().getContent().toString() +
+                " interrupt");
         throw new InterruptedIOException("retry policy=" + retryPolicy);
       }
     }
