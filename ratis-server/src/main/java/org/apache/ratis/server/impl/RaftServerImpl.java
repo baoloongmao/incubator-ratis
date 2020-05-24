@@ -451,6 +451,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
       return RetryCache.failWithReply(reply, entry);
     }
     final LeaderState leaderState = role.getLeaderState().orElse(null);
+    System.err.println("wangjie checkLeaderState leaderState:" + leaderState);
     if (leaderState == null || !leaderState.isReady()) {
       RetryCache.CacheEntry cacheEntry = retryCache.get(request.getClientId(), request.getCallId());
       if (cacheEntry != null && cacheEntry.isCompletedNormally()) {

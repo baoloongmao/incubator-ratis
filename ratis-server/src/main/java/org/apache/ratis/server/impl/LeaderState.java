@@ -257,6 +257,8 @@ public class LeaderState {
   }
 
   boolean isReady() {
+    System.err.println("wangjie isReady applyIndex:" + server.getState().getLastAppliedIndex() +
+            " placeHolderIndex:" + placeHolderIndex);
     return server.getState().getLastAppliedIndex() >= placeHolderIndex;
   }
 
