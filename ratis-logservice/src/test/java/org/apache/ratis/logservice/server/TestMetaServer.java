@@ -201,7 +201,9 @@ public class TestMetaServer {
                 }
 //        assert(stream.getSize() > 0); //TODO: Doesn't work
                 LogReader reader = stream.createReader();
+                System.err.println("wangjie testReadWritetoLog readNext begin");
                 ByteBuffer res = reader.readNext();
+                System.err.println("wangjie testReadWritetoLog readNext end");
                 assert (res.array().length > 0);
             }
         }
