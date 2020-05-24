@@ -75,8 +75,12 @@ public class TestMetaServer {
         cluster.createWorkers(3);
         workers = cluster.getWorkers();
         assert(workers.size() == 3);
+
         RaftProperties properties = new RaftProperties();
         RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
+
+        cluster.getMasters().parallelStream().forEach(master ->
+                ((MetaStateMachine)master.getMetaStateMachine()).setProperties(properties));
 
         client = new LogServiceClient(cluster.getMetaIdentity(), properties){
             @Override public LogStream createLog(LogName logName) throws IOException {
@@ -176,6 +180,7 @@ public class TestMetaServer {
 
     @Test
     public void testReadWritetoLog() throws Exception {
+        System.err.println("wangjie testReadWritetoLog begin");
         for (int i = 0; i < 1; i ++) {
             String logName = "testReadWrite" + i;
             try (LogStream stream = client.createLog(LogName.of(logName))) {
@@ -200,6 +205,7 @@ public class TestMetaServer {
                 assert (res.array().length > 0);
             }
         }
+        System.err.println("wangjie testReadWritetoLog end");
         System.err.println("wangjie jmxCount testReadWritetoLog createCount:" + createCount.get() +
                 " jmxCount:" + getJMXCount(MetaServiceProtos.MetaServiceRequestProto.TypeCase.CREATELOG.name()));
     }

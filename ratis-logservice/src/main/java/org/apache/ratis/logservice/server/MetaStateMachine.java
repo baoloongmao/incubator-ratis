@@ -114,18 +114,22 @@ public class MetaStateMachine extends BaseStateMachine {
       this.metadataGroupId = metadataGroupId;
       this.logServerGroupId = logServerGroupId;
       this.failureDetectionPeriod = failureDetectionPeriod;
-        RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
+        //RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
     }
 
     @Override
     public void initialize(RaftServer server, RaftGroupId groupId, RaftStorage storage) throws IOException {
-        RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
+        //RaftClientConfigKeys.Rpc.setRequestTimeout(properties, TimeDuration.valueOf(15, TimeUnit.SECONDS));
         this.raftServer = server;
         this.metricRegistry = LogServiceMetricsRegistry
             .createMetricRegistryForLogServiceMetaData(server.getId().toString());
         super.initialize(server, groupId, storage);
         peerHealthChecker = new Daemon(new PeerHealthChecker(),"peer-Health-Checker");
         peerHealthChecker.start();
+    }
+
+    public void setProperties(RaftProperties properties) {
+        this.properties = properties;
     }
 
     @Override
