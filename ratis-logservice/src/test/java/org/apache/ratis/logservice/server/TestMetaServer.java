@@ -194,11 +194,13 @@ public class TestMetaServer {
                             .getImpl(listLogs.get(0).getRaftGroup().getGroupId());
                     // TODO: perform all additional checks on state machine level
                 }
+                System.err.println("wangjie testReadWritetoLog write begin");
                 writer.write(testMessage);
                 for (LogServer worker : workers) {
                     RaftServerImpl server = ((RaftServerProxy) worker.getServer())
                             .getImpl(listLogs.get(0).getRaftGroup().getGroupId());
                 }
+                System.err.println("wangjie testReadWritetoLog write end");
 //        assert(stream.getSize() > 0); //TODO: Doesn't work
                 LogReader reader = stream.createReader();
                 System.err.println("wangjie testReadWritetoLog readNext begin");
