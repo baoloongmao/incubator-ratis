@@ -390,6 +390,7 @@ public class LogStateMachine extends BaseStateMachine {
    * @return reply message
    */
   private CompletableFuture<Message> processReadRequest(LogServiceRequestProto proto) {
+    System.err.println("wangjie enter processReadRequest");
     ReadLogRequestProto msgProto = proto.getReadNextQuery();
     // Get the recordId the user wants to start reading at
     long startRecordId = msgProto.getStartRecordId();
@@ -415,9 +416,12 @@ public class LogStateMachine extends BaseStateMachine {
           t = verifyState(State.OPEN, State.ARCHIVED);
         }
         if (t == null && reader != null) {
+          System.err.println("wangjie enter processReadRequest 1");
           list = new ArrayList<byte[]>();
           reader.seek(startRecordId);
           for (int i = 0; i < numRecordsToRead; i++) {
+            System.err.println("wangjie enter processReadRequest 2 numRecordsToRead:" + numRecordsToRead +
+                    " i:" + i + " hasNext:" + reader.hasNext());
             if (!reader.hasNext()) {
               break;
             }
