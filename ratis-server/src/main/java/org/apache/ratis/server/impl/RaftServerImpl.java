@@ -451,7 +451,6 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
       return RetryCache.failWithReply(reply, entry);
     }
     final LeaderState leaderState = role.getLeaderState().orElse(null);
-    System.err.println("wangjie checkLeaderState leaderState:" + leaderState);
     if (leaderState == null || !leaderState.isReady()) {
       RetryCache.CacheEntry cacheEntry = retryCache.get(request.getClientId(), request.getCallId());
       if (cacheEntry != null && cacheEntry.isCompletedNormally()) {
@@ -968,7 +967,9 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
             + previous + ", " + leaderCommit + ", " + initializing
             + ", commits" + ProtoUtils.toString(commitInfos)
             + ", entries: " + ServerProtoUtils.toString(entries));
-
+    if (!isHeartbeat) {
+      System.err.println("wangjie appendEntriesAsync 1 entry:" + entries[0] + " this:" + this.hashCode());
+    }
     final long currentTerm;
     final long followerCommit = state.getLog().getLastCommittedIndex();
     final Optional<FollowerState> followerState;
@@ -986,6 +987,9 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
         }
         return CompletableFuture.completedFuture(reply);
       }
+      if (!isHeartbeat) {
+        System.err.println("wangjie appendEntriesAsync 2 entry:" + entries[0] + " this:" + this.hashCode());
+      }
       try {
         changeToFollowerAndPersistMetadata(leaderTerm, "appendEntries");
       } catch (IOException e) {
@@ -997,7 +1001,9 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
         role.startFollowerState(this);
       }
       followerState = updateLastRpcTime(FollowerState.UpdateType.APPEND_START);
-
+      if (!isHeartbeat) {
+        System.err.println("wangjie appendEntriesAsync 3 entry:" + entries[0] + " this:" + this.hashCode());
+      }
       // Check that the append entries are not inconsistent. There are 3
       // scenarios which can result in inconsistency:
       //      1. There is a snapshot installation in progress
@@ -1015,7 +1021,9 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
 
       state.updateConfiguration(entries);
     }
-
+    if (!isHeartbeat) {
+      System.err.println("wangjie appendEntriesAsync 4 entry:" + entries[0] + " this:" + this.hashCode());
+    }
     final List<CompletableFuture<Long>> futures = entries.length == 0 ? Collections.emptyList()
         : state.getLog().append(entries);
     commitInfos.forEach(commitInfoCache::update);
@@ -1035,6 +1043,9 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
         reply = ServerProtoUtils.toAppendEntriesReplyProto(leaderId, getMemberId(), currentTerm,
             state.getLog().getLastCommittedIndex(), n, SUCCESS, callId, matchIndex,
             isHeartbeat);
+        if (!isHeartbeat) {
+          System.err.println("wangjie appendEntriesAsync 5 entry:" + entries[0] + " this:" + this.hashCode());
+        }
       }
       logAppendEntries(isHeartbeat, () ->
           getMemberId() + ": succeeded to handle AppendEntries. Reply: " + ServerProtoUtils.toString(reply));

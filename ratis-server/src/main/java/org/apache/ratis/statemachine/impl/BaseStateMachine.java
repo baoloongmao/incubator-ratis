@@ -124,7 +124,25 @@ public class BaseStateMachine implements StateMachine {
     return lastAppliedTermIndex.get();
   }
 
+  public void printCallStatck(String str) {
+    Throwable ex = new Throwable();
+    StackTraceElement[] stackElements = ex.getStackTrace();
+    if (stackElements != null) {
+      for (int i = 0; i < stackElements.length; i++) {
+        System.err.println(str + ": "
+                + stackElements[i].getClassName()+ "|"
+                + stackElements[i].getFileName()+"|"
+                + stackElements[i].getLineNumber()+"|"
+                + stackElements[i].getMethodName());
+      }
+    }
+  }
+
   protected void setLastAppliedTermIndex(TermIndex newTI) {
+    if (newTI.getIndex() == -1 || newTI.getIndex() == 0) {
+      printCallStatck("setLastAppliedTermIndex this:" + this.hashCode() + " thread:" +
+              Thread.currentThread().getId() + " newTI:" + newTI);
+    }
     lastAppliedTermIndex.set(newTI);
   }
 
@@ -135,6 +153,10 @@ public class BaseStateMachine implements StateMachine {
 
   protected boolean updateLastAppliedTermIndex(long term, long index) {
     final TermIndex newTI = TermIndex.newTermIndex(term, index);
+    if (index == -1 || index == 0) {
+      printCallStatck("updateLastAppliedTermIndex this:" + this.hashCode() + " thread:" +
+              Thread.currentThread().getId() + " newTI:" + newTI);
+    }
     final TermIndex oldTI = lastAppliedTermIndex.getAndSet(newTI);
     if (!newTI.equals(oldTI)) {
       LOG.trace("{}: update lastAppliedTermIndex from {} to {}", getId(), oldTI, newTI);

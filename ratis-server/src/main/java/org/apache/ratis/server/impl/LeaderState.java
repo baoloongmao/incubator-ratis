@@ -257,9 +257,11 @@ public class LeaderState {
   }
 
   boolean isReady() {
-    System.err.println("wangjie isReady applyIndex:" + server.getState().getLastAppliedIndex() +
-            " placeHolderIndex:" + placeHolderIndex);
-    return server.getState().getLastAppliedIndex() >= placeHolderIndex;
+    long appliedIndex = server.getState().getLastAppliedIndex();
+    System.err.println("wangjie isReady stateMachine:" + server.getState().getStateMachine().hashCode() +
+            " applyIndex:" + appliedIndex +
+            " placeHolderIndex:" + placeHolderIndex + " thread:" + Thread.currentThread().getId());
+    return appliedIndex >= placeHolderIndex;
   }
 
   void stop() {

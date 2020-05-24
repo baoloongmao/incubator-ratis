@@ -30,6 +30,7 @@ import org.apache.ratis.proto.RaftProtos.LogEntryProto;
 import org.apache.ratis.statemachine.SnapshotInfo;
 import org.apache.ratis.statemachine.StateMachine;
 import org.apache.ratis.statemachine.TransactionContext;
+import org.apache.ratis.statemachine.impl.BaseStateMachine;
 import org.apache.ratis.util.TimeDuration;
 import org.apache.ratis.util.Timestamp;
 
@@ -434,6 +435,10 @@ public class ServerState implements Closeable {
 
   public long getLastAppliedIndex() {
     return stateMachineUpdater.getStateMachineLastAppliedIndex();
+  }
+
+  public StateMachine getStateMachine() {
+    return stateMachineUpdater.getStateMachine();
   }
 
   boolean containsTermIndex(TermIndex ti) {

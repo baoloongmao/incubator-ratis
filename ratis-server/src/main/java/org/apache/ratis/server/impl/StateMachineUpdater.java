@@ -28,6 +28,7 @@ import org.apache.ratis.server.raftlog.RaftLogIOException;
 import org.apache.ratis.server.raftlog.RaftLogIndex;
 import org.apache.ratis.statemachine.SnapshotInfo;
 import org.apache.ratis.statemachine.StateMachine;
+import org.apache.ratis.statemachine.impl.BaseStateMachine;
 import org.apache.ratis.statemachine.impl.SnapshotRetentionPolicy;
 import org.apache.ratis.util.*;
 import org.slf4j.Logger;
@@ -217,6 +218,8 @@ class StateMachineUpdater implements Runnable {
   private MemoizedSupplier<List<CompletableFuture<Message>>> applyLog() throws RaftLogIOException {
     final MemoizedSupplier<List<CompletableFuture<Message>>> futures = MemoizedSupplier.valueOf(ArrayList::new);
     final long committed = raftLog.getLastCommittedIndex();
+    System.err.println("wangjie stateMachine:" + getStateMachine().hashCode() + " applied:" + getLastAppliedIndex() +
+            " committed:" + committed + " state:" + state + " shouldStop:" + shouldStop());
     for(long applied; (applied = getLastAppliedIndex()) < committed && state == State.RUNNING && !shouldStop(); ) {
       final long nextIndex = applied + 1;
       final LogEntryProto next = raftLog.get(nextIndex);
@@ -226,7 +229,7 @@ class StateMachineUpdater implements Runnable {
         } else {
           LOG.debug("{}: applying nextIndex={}", this, nextIndex);
         }
-
+        System.err.println("wangjie stateMachine:" + getStateMachine().hashCode() + " applyLog:" + next);
         final CompletableFuture<Message> f = server.applyLogToStateMachine(next);
         if (f != null) {
           futures.get().add(f);
@@ -310,5 +313,9 @@ class StateMachineUpdater implements Runnable {
 
   long getStateMachineLastAppliedIndex() {
     return stateMachine.getLastAppliedTermIndex().getIndex();
+  }
+
+  public StateMachine getStateMachine() {
+    return stateMachine;
   }
 }
