@@ -271,6 +271,7 @@ public class GrpcLogAppender extends LogAppender {
 
       switch (reply.getResult()) {
         case SUCCESS:
+          System.err.println("wangjie append succ follower commit:" + reply.getFollowerCommit() + " reply:" + reply);
           grpcServerMetrics.onRequestSuccess(getFollowerId().toString(), reply.getIsHearbeat());
           updateCommitIndex(reply.getFollowerCommit());
           if (getFollower().updateMatchIndex(reply.getMatchIndex())) {

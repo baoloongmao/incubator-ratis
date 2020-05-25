@@ -370,7 +370,9 @@ public class LeaderState {
   }
 
   void commitIndexChanged() {
-    getMajorityMin(FollowerInfo::getCommitIndex, raftLog::getLastCommittedIndex).ifPresent(m -> {
+      System.err.println("wangjie wangjie testReadWritetoLog leader commitIndexChanged log:" + raftLog.hashCode() +
+            " committedIndex:" + raftLog.getLastCommittedIndex());
+      getMajorityMin(FollowerInfo::getCommitIndex, raftLog::getLastCommittedIndex).ifPresent(m -> {
       // Normally, leader commit index is always ahead of followers.
       // However, after a leader change, the new leader commit index may
       // be behind some followers in the beginning.

@@ -1044,7 +1044,8 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
             state.getLog().getLastCommittedIndex(), n, SUCCESS, callId, matchIndex,
             isHeartbeat);
         if (!isHeartbeat) {
-          System.err.println("wangjie appendEntriesAsync 5 entry:" + entries[0] + " this:" + this.hashCode());
+          System.err.println("wangjie appendEntriesAsync 5 entry:" + entries[0] +
+                  " this:" + this.hashCode());
         }
       }
       logAppendEntries(isHeartbeat, () ->

@@ -125,7 +125,7 @@ public class LogServiceRaftLogReader implements  RaftLogReader{
       currentRaftIndex++;
     }
 
-    System.err.println("wangjie testReadWritetoLog 1 currentRaftIndex:" + currentRaftIndex +
+    System.err.println("wangjie testReadWritetoLog 1 raftLog:" + raftLog.hashCode() + " currentRaftIndex:" + currentRaftIndex +
             " committedIndex:" + raftLog.getLastCommittedIndex());
 
     // Make sure we don't read off the end of the Raft log
@@ -136,7 +136,7 @@ public class LogServiceRaftLogReader implements  RaftLogReader{
           LOG.trace("Raft Index: {} Entry: {}", currentRaftIndex,
               TextFormat.shortDebugString(entry));
         }
-        System.err.println("wangjie testReadWritetoLog 2 currentRaftIndex:" + currentRaftIndex +
+        System.err.println("wangjie testReadWritetoLog 2 raftLog:" + raftLog.hashCode() + " currentRaftIndex:" + currentRaftIndex +
                 " committedIndex:" + raftLog.getLastCommittedIndex() + " entry:" + entry);
         if (entry == null || entry.hasConfigurationEntry()) {
           continue;
@@ -151,7 +151,7 @@ public class LogServiceRaftLogReader implements  RaftLogReader{
 
         currentLogEntry = logServiceProto.getAppendRequest();
         currentLogEntryOffset = 0;
-        System.err.println("wangjie testReadWritetoLog 3 currentRaftIndex:" + currentRaftIndex +
+        System.err.println("wangjie testReadWritetoLog 3 raftLog:" + raftLog.hashCode() + " currentRaftIndex:" + currentRaftIndex +
                 " committedIndex:" + raftLog.getLastCommittedIndex() + " entry:" + entry + " currentLogEntry count:" +
                 currentLogEntry.getDataCount());
         if (currentLogEntry.getDataCount() > 0) {

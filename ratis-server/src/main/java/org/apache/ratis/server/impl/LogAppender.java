@@ -303,6 +303,8 @@ public class LogAppender {
   protected void updateCommitIndex(long commitIndex) {
     if (follower.updateCommitIndex(commitIndex)) {
       leaderState.commitIndexChanged();
+    } else {
+      System.err.println("wangjie append succ update follower fail commit:" + commitIndex);
     }
   }
 
