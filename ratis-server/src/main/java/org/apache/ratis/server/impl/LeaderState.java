@@ -370,7 +370,7 @@ public class LeaderState {
   }
 
   void commitIndexChanged() {
-      System.err.println("wangjie wangjie testReadWritetoLog leader name:" + name + " this:" + this.hashCode() +
+      System.err.println("wangjie testReadWritetoLog leader name:" + name + " this:" + this.hashCode() +
             " commitIndexChanged log:" + raftLog.hashCode() +
             " committedIndex:" + raftLog.getLastCommittedIndex());
       getMajorityMin(FollowerInfo::getCommitIndex, raftLog::getLastCommittedIndex).ifPresent(m -> {

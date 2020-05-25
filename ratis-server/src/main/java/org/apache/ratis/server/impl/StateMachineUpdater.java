@@ -218,7 +218,7 @@ class StateMachineUpdater implements Runnable {
   private MemoizedSupplier<List<CompletableFuture<Message>>> applyLog() throws RaftLogIOException {
     final MemoizedSupplier<List<CompletableFuture<Message>>> futures = MemoizedSupplier.valueOf(ArrayList::new);
     final long committed = raftLog.getLastCommittedIndex();
-    System.err.println("wangjie stateMachine:" + getStateMachine().hashCode() + " applied:" + getLastAppliedIndex() +
+    System.err.println("wangjie server:" + server.toString() + " stateMachine:" + getStateMachine().hashCode() + " applied:" + getLastAppliedIndex() +
             " committed:" + committed + " state:" + state + " shouldStop:" + shouldStop());
     for(long applied; (applied = getLastAppliedIndex()) < committed && state == State.RUNNING && !shouldStop(); ) {
       final long nextIndex = applied + 1;
@@ -229,7 +229,7 @@ class StateMachineUpdater implements Runnable {
         } else {
           LOG.debug("{}: applying nextIndex={}", this, nextIndex);
         }
-        System.err.println("wangjie stateMachine:" + getStateMachine().hashCode() + " applyLog:" + next);
+        System.err.println("wangjie server:" + server.toString() + " stateMachine:" + getStateMachine().hashCode() + " applyLog:" + next);
         final CompletableFuture<Message> f = server.applyLogToStateMachine(next);
         if (f != null) {
           futures.get().add(f);

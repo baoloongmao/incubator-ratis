@@ -559,7 +559,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
 
   @Override
   public CompletableFuture<RaftClientReply> submitClientRequestAsync(
-      RaftClientRequest request) throws IOException {
+      final RaftClientRequest request) throws IOException {
     System.err.println("wangjie submitClientRequestAsync 1:" + request.hashCode() + " request:" + request);
     assertLifeCycleState(LifeCycle.States.RUNNING);
     LOG.debug("{}: receive client request({})", getMemberId(), request);
@@ -631,6 +631,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
     }
 
     replyFuture.whenComplete((clientReply, exception) -> {
+      System.err.println("wangjie submitClientRequestAsync finish request:" + request + " reply:" + clientReply);
       if (clientReply.isSuccess() && timerContext != null) {
         timerContext.stop();
       }
@@ -1358,6 +1359,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
   }
 
   CompletableFuture<Message> applyLogToStateMachine(LogEntryProto next) {
+    System.err.println("wangjie applyLogToStateMachine this:" + this + " next:" + next);
     if (!next.hasStateMachineLogEntry()) {
       stateMachine.notifyIndexUpdate(next.getTerm(), next.getIndex());
     }
