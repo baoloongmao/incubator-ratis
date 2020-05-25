@@ -18,6 +18,7 @@
 package org.apache.ratis.server.impl;
 
 import org.apache.ratis.conf.RaftProperties;
+import org.apache.ratis.proto.ExamplesProtos;
 import org.apache.ratis.proto.RaftProtos.*;
 import org.apache.ratis.protocol.*;
 import org.apache.ratis.protocol.exceptions.ResourceUnavailableException;
@@ -35,6 +36,8 @@ import org.apache.ratis.statemachine.SnapshotInfo;
 import org.apache.ratis.statemachine.StateMachine;
 import org.apache.ratis.statemachine.TransactionContext;
 import org.apache.ratis.thirdparty.com.google.common.annotations.VisibleForTesting;
+import org.apache.ratis.thirdparty.com.google.protobuf.ByteString;
+import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.ratis.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -556,9 +559,28 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
     return pending.getFuture();
   }
 
+  private void printClientRequest(RaftClientRequest request) throws InvalidProtocolBufferException {
+    RaftClientRequest.Type type = request.getType();
+    if (!type.is(RaftClientRequestProto.TypeCase.WRITE)) {
+      return;
+    }
+
+    final ByteString content = request.getMessage().getContent();
+    final ExamplesProtos.FileStoreRequestProto proto = ExamplesProtos.FileStoreRequestProto.parseFrom(content);
+    if (proto.getRequestCase() == ExamplesProtos.FileStoreRequestProto.RequestCase.WRITE) {
+      final ExamplesProtos.WriteRequestProto write = proto.getWrite();
+      final ExamplesProtos.WriteRequestHeaderProto h = write.getHeader();
+      String relative = h.getPath().toStringUtf8();
+      long offset = h.getOffset();
+      System.err.println("receive client 1 write request:" + request.hashCode() + " cid:" + request.getCallId() +
+              " relative:" + relative + " offset:" + offset + " " + getMemberId());
+    }
+  }
+
   @Override
   public CompletableFuture<RaftClientReply> submitClientRequestAsync(
       RaftClientRequest request) throws IOException {
+    printClientRequest(request);
     assertLifeCycleState(LifeCycle.States.RUNNING);
     LOG.debug("{}: receive client request({})", getMemberId(), request);
     Timer timer = raftServerMetrics.getClientRequestTimer(request);
@@ -568,9 +590,15 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
     if (request.is(RaftClientRequestProto.TypeCase.STALEREAD)) {
       replyFuture =  staleReadAsync(request);
     } else {
+      //System.err.println("receive client 2 write request:" + request.hashCode());
       // first check the server's leader state
       CompletableFuture<RaftClientReply> reply = checkLeaderState(request, null);
       if (reply != null) {
+        try {
+          System.err.println("receive client 3 write request:" + request.hashCode() +
+                  " cid:" + request.getCallId() + " reply:" + reply.get());
+        } catch (Exception e) {
+        }
         return reply;
       }
       // let the state machine handle read-only request from client
@@ -602,6 +630,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
           // if the previous attempt is still pending or it succeeded, return its
           // future
           replyFuture = previousResult.getEntry().getReplyFuture();
+          System.err.println("receive client 4 write request:" + request.hashCode() + " cid:" + request.getCallId());
         } else {
           final RetryCache.CacheEntry cacheEntry = previousResult.getEntry();
 
@@ -614,8 +643,10 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
                 new StateMachineException(getMemberId(), context.getException()), getCommitInfos());
             cacheEntry.failWithReply(exceptionReply);
             replyFuture =  CompletableFuture.completedFuture(exceptionReply);
+            System.err.println("receive client 5 write request:" + request.hashCode() + " cid:" + request.getCallId());
           } else {
             replyFuture = appendTransaction(request, context, cacheEntry);
+            System.err.println("receive client 6 write request:" + request.hashCode() + " cid:" + request.getCallId());
           }
         }
       }
@@ -901,7 +932,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
       return appendEntriesAsync(requestorId, r.getLeaderTerm(), previous, r.getLeaderCommit(),
           request.getCallId(), r.getInitializing(), r.getCommitInfosList(), entries);
     } catch(Throwable t) {
-      LOG.error("{}: Failed appendEntriesAsync {}", getMemberId(), r, t);
+      LOG.error("{}: Failed appendEntriesAsync", getMemberId(), t);
       throw t;
     }
   }
@@ -948,10 +979,47 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
     }
   }
 
+  void printEntryWithData(LogEntryProto... entries) {
+    int len = entries.length;
+    for (int i = 0; i < len; i ++) {
+      LogEntryProto entry = entries[i];
+      LogEntryProto entryWithoutData = ServerProtoUtils.removeStateMachineData(entry);
+      if (entryWithoutData == entry) {
+        continue;
+      }
+
+      final StateMachineLogEntryProto smLog = entry.getStateMachineLogEntry();
+      final ByteString data = smLog.getLogData();
+      final ExamplesProtos.FileStoreRequestProto proto;
+      try {
+        proto = ExamplesProtos.FileStoreRequestProto.parseFrom(data);
+      } catch (InvalidProtocolBufferException e) {
+        continue;
+      }
+      if (proto.getRequestCase() != ExamplesProtos.FileStoreRequestProto.RequestCase.WRITEHEADER) {
+        continue;
+      }
+
+      final ExamplesProtos.WriteRequestHeaderProto h = proto.getWriteHeader();
+
+      long index = entry.getIndex();
+      String relative = h.getPath().toStringUtf8();
+      boolean close = h.getClose();
+      long offset = h.getOffset();
+      ByteString byteData = smLog.getStateMachineEntry().getStateMachineData();
+      final int size = byteData != null? byteData.size(): 0;
+
+      System.err.println("wangjie printEntryWithData write:" + relative + " offset:" + offset +
+              " size:" + size + " close:" + close +
+              " @" + getId() + "-" + getMemberId() + ":" + index);
+    }
+  }
+
   @SuppressWarnings("checkstyle:parameternumber")
   private CompletableFuture<AppendEntriesReplyProto> appendEntriesAsync(
       RaftPeerId leaderId, long leaderTerm, TermIndex previous, long leaderCommit, long callId, boolean initializing,
       List<CommitInfoProto> commitInfos, LogEntryProto... entries) {
+    printEntryWithData(entries);
     final boolean isHeartbeat = entries.length == 0;
     logAppendEntries(isHeartbeat,
         () -> getMemberId() + ": receive appendEntries(" + leaderId + ", " + leaderTerm + ", "

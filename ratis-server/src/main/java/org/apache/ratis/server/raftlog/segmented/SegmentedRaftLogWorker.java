@@ -454,8 +454,10 @@ class SegmentedRaftLogWorker implements Runnable {
     WriteLog(LogEntryProto entry) {
       this.entry = ServerProtoUtils.removeStateMachineData(entry);
       if (this.entry == entry || stateMachine == null) {
+        System.err.println("wangjie write FileStore no data index:" + entry.getIndex());
         this.stateMachineFuture = null;
       } else {
+        System.err.println("wangjie write FileStore has data index:" + entry.getIndex());
         try {
           // this.entry != entry iff the entry has state machine data
           this.stateMachineFuture = stateMachine.writeStateMachineData(entry);

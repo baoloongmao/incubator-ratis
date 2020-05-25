@@ -83,8 +83,10 @@ public class FileStoreClient implements Closeable {
 
   static CompletableFuture<ByteString> sendAsync(
       ByteString request, Function<Message, CompletableFuture<RaftClientReply>> sendFunction) {
+    System.err.println("wangjie sendAsync request:" + request.hashCode());
     return sendFunction.apply(() -> request
     ).thenApply(reply -> {
+      System.err.println("wangjie sendAsync request:" + request.hashCode() + " reply:" + reply.toString());
       final StateMachineException sme = reply.getStateMachineException();
       if (sme != null) {
         throw new CompletionException("Failed to send request " + request, sme);

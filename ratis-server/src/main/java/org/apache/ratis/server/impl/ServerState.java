@@ -18,6 +18,8 @@
 package org.apache.ratis.server.impl;
 
 import org.apache.ratis.conf.RaftProperties;
+import org.apache.ratis.proto.ExamplesProtos;
+import org.apache.ratis.proto.RaftProtos;
 import org.apache.ratis.protocol.*;
 import org.apache.ratis.server.RaftServerConfigKeys;
 import org.apache.ratis.server.protocol.TermIndex;
@@ -30,6 +32,8 @@ import org.apache.ratis.proto.RaftProtos.LogEntryProto;
 import org.apache.ratis.statemachine.SnapshotInfo;
 import org.apache.ratis.statemachine.StateMachine;
 import org.apache.ratis.statemachine.TransactionContext;
+import org.apache.ratis.thirdparty.com.google.protobuf.ByteString;
+import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.ratis.util.TimeDuration;
 import org.apache.ratis.util.Timestamp;
 
@@ -281,6 +285,39 @@ public class ServerState implements Closeable {
   void appendLog(TransactionContext operation) throws StateMachineException {
     log.append(currentTerm.get(), operation);
     Objects.requireNonNull(operation.getLogEntry());
+    printEntryWithData(operation.getLogEntry());
+  }
+
+  void printEntryWithData(LogEntryProto entry) {
+      LogEntryProto entryWithoutData = ServerProtoUtils.removeStateMachineData(entry);
+      if (entryWithoutData == entry) {
+        return;
+      }
+
+      final RaftProtos.StateMachineLogEntryProto smLog = entry.getStateMachineLogEntry();
+      final ByteString data = smLog.getLogData();
+      final ExamplesProtos.FileStoreRequestProto proto;
+      try {
+        proto = ExamplesProtos.FileStoreRequestProto.parseFrom(data);
+      } catch (InvalidProtocolBufferException e) {
+        return;
+      }
+      if (proto.getRequestCase() != ExamplesProtos.FileStoreRequestProto.RequestCase.WRITEHEADER) {
+        return;
+      }
+
+      final ExamplesProtos.WriteRequestHeaderProto h = proto.getWriteHeader();
+
+      long index = entry.getIndex();
+      String relative = h.getPath().toStringUtf8();
+      boolean close = h.getClose();
+      long offset = h.getOffset();
+      ByteString byteData = smLog.getStateMachineEntry().getStateMachineData();
+      final int size = byteData != null? byteData.size(): 0;
+
+      System.err.println("wangjie appendLog write:" + relative + " offset:" + offset +
+              " size:" + size + " close:" + close +
+              " " + getMemberId() + ":" + index);
   }
 
   /**

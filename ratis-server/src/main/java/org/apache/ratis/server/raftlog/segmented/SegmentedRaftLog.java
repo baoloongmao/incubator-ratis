@@ -412,6 +412,7 @@ public class SegmentedRaftLog extends RaftLog {
       // If the entry has state machine data, then the entry should be inserted
       // to statemachine first and then to the cache. Not following the order
       // will leave a spurious entry in the cache.
+      System.err.println("wangjie appendEntryImpl entry:" + entry.getIndex());
       CompletableFuture<Long> writeFuture =
           fileLogWorker.writeLogEntry(entry).getFuture();
       if (stateMachineCachingEnabled) {

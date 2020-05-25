@@ -192,7 +192,11 @@ public abstract class FileStoreBaseTest<CLUSTER extends MiniRaftCluster>
         LOG.trace("writeAsync {}, offset={}, length={}, close? {}",
             fileName, offset, length, close);
         client.writeAsync(fileName, offset, close, b)
-            .thenAcceptAsync(written -> Assert.assertEquals(length, (long)written), asyncExecutor)
+            .thenAcceptAsync(written -> {
+              System.err.println("wangjie writeAsync succ fileName:" + fileName +
+                      " offset:" + offset + " length:" + length);
+              Assert.assertEquals(length, (long)written);
+            }, asyncExecutor)
             .thenRun(() -> {
               final int count = callCount.decrementAndGet();
               LOG.trace("writeAsync {}, offset={}, length={}, close? {}: n={}, callCount={}",
