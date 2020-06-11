@@ -42,11 +42,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.LongFunction;
@@ -208,8 +204,8 @@ public final class OrderedAsync {
       RaftClientRequest request, RetryPolicy retryPolicy, Throwable e) {
     final int attempt = pending.getAttemptCount();
     final ClientRetryEvent event = new ClientRetryEvent(request, e, pending);
-    final TimeDuration sleepTime = client.getEffectiveSleepTime(e,
-        retryPolicy.handleAttemptFailure(event).getSleepTime());
+    TimeDuration sleepTime = client.getEffectiveSleepTime(e,
+        TimeDuration.valueOf(100, TimeUnit.MILLISECONDS));
     LOG.debug("schedule* attempt #{} with sleep {} and policy {} for {}", attempt, sleepTime, retryPolicy, request);
     scheduleWithTimeout(pending, sleepTime, getSlidingWindow(request));
   }
