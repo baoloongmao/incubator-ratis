@@ -224,6 +224,11 @@ abstract class FileInfo {
     }
 
     private int write(long offset, ByteString data, boolean close) throws IOException {
+      if (offset < writeSize) {
+        System.err.println("wangjie write offset < writeSize offset:" + offset + " writeSize:" + writeSize);
+        return data.size();
+      }
+
       if (offset != writeSize) {
         throw new IOException("Offset/size mismatched: offset = " + offset
             + " != writeSize = " + writeSize + ", path=" + getRelativePath());
