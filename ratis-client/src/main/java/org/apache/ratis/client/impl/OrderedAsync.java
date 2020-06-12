@@ -205,7 +205,7 @@ public final class OrderedAsync {
     final int attempt = pending.getAttemptCount();
     final ClientRetryEvent event = new ClientRetryEvent(request, e, pending);
     TimeDuration sleepTime = client.getEffectiveSleepTime(e,
-        TimeDuration.valueOf(100, TimeUnit.MILLISECONDS));
+            retryPolicy.handleAttemptFailure(event).getSleepTime());
     LOG.debug("schedule* attempt #{} with sleep {} and policy {} for {}", attempt, sleepTime, retryPolicy, request);
     scheduleWithTimeout(pending, sleepTime, getSlidingWindow(request));
   }
