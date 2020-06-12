@@ -52,6 +52,7 @@ public abstract class FileStoreAsyncBaseTest<CLUSTER extends MiniRaftCluster>
 
   @Test
   public void testFileStoreAsync() throws Exception {
+    long begin = System.currentTimeMillis();
     final CLUSTER cluster = newCluster(NUM_PEERS);
     cluster.start();
     RaftTestUtil.waitForLeader(cluster);
@@ -59,12 +60,14 @@ public abstract class FileStoreAsyncBaseTest<CLUSTER extends MiniRaftCluster>
     final FileStoreClient client = new FileStoreClient(cluster.getGroup(), getProperties());
     final ExecutorService executor = Executors.newFixedThreadPool(20);
 
-    testSingleFile("foo", SizeInBytes.valueOf("10M"), executor, client);
-    testMultipleFiles("file", 30, SizeInBytes.valueOf("1M"), executor, client);
+    testSingleFile("foo", SizeInBytes.valueOf("50M"), executor, client);
+    testMultipleFiles("file", 100, SizeInBytes.valueOf("1M"), executor, client);
 
     executor.shutdown();
     client.close();
     cluster.shutdown();
+    long end = System.currentTimeMillis();
+    System.err.println("wangjie testFileStoreAsync cost:" + (end - begin));
   }
 
   private static void testSingleFile(
