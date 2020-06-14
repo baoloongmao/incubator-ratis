@@ -242,6 +242,10 @@ public class GrpcLogAppender extends LogAppender {
      */
     @Override
     public void onNext(AppendEntriesReplyProto reply) {
+      System.err.println("wangjie matchIndex onNextImpl:" + ProtoUtils.toString(reply.getServerReply()) + "," + reply.getResult()
+              + ",nextIndex:" + reply.getNextIndex() + ",term:" + reply.getTerm()
+              + ",followerCommit:" + reply.getFollowerCommit() + ",matchIndex:" + reply.getMatchIndex());
+
       AppendEntriesRequest request = pendingRequests.remove(reply);
       if (request != null) {
         request.stopRequestTimer(); // Update completion time
@@ -293,11 +297,50 @@ public class GrpcLogAppender extends LogAppender {
       notifyAppend();
     }
 
+    public void printCallStatck(String str) {
+      Throwable ex = new Throwable();
+      StackTraceElement[] stackElements = ex.getStackTrace();
+      if (stackElements != null) {
+        for (int i = 0; i < stackElements.length; i++) {
+          System.err.println(str + ": "
+                  + stackElements[i].getClassName()+ "|"
+                  + stackElements[i].getFileName()+"|"
+                  + stackElements[i].getLineNumber()+"|"
+                  + stackElements[i].getMethodName());
+        }
+      }
+    }
+
+    public void printCallStatck2(Throwable ex, String str) {
+      StackTraceElement[] stackElements = ex.getStackTrace();
+      if (stackElements != null) {
+        for (int i = 0; i < stackElements.length; i++) {
+          System.err.println(str + ": "
+                  + stackElements[i].getClassName()+ "|"
+                  + stackElements[i].getFileName()+"|"
+                  + stackElements[i].getLineNumber()+"|"
+                  + stackElements[i].getMethodName());
+        }
+      }
+    }
+
     /**
      * for now we simply retry the first pending request
      */
     @Override
     public void onError(Throwable t) {
+      LOG.error("grpc error stack", t);
+      System.err.println(".............................................................................");
+      printCallStatck("grpc error");
+      Throwable parent = t;
+      while (parent != null && parent.getCause() != null && parent.getCause().getStackTrace() != null) {
+        System.err.println("caused by:" + parent.getCause());
+        if (parent.getCause().getStackTrace() != null) {
+          printCallStatck2(parent.getCause(), "Caused by");
+        }
+        parent = parent.getCause();
+      }
+
       if (!isAppenderRunning()) {
         LOG.info("{} is stopped", GrpcLogAppender.this);
         return;

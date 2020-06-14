@@ -127,7 +127,7 @@ public interface ServerProtoUtils {
     }
     return ProtoUtils.toString(reply.getServerReply()) + "," + reply.getResult()
         + ",nextIndex:" + reply.getNextIndex() + ",term:" + reply.getTerm()
-        + ",followerCommit:" + reply.getFollowerCommit();
+        + ",followerCommit:" + reply.getFollowerCommit() + ",matchIndex:" + reply.getMatchIndex();
   }
 
   static String toString(RequestVoteReplyProto proto) {

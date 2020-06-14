@@ -171,7 +171,8 @@ public interface ProtoUtils {
   }
 
   static String toString(RaftRpcReplyProto proto) {
-    return proto.getRequestorId().toStringUtf8() + "<-" + proto.getReplyId().toStringUtf8()
+    return proto.getRequestorId() + "  <-  " + proto.getReplyId()
+        + " group:" + proto.getRaftGroupId().getId()
         + "#" + proto.getCallId() + ":"
         + (proto.getSuccess()? "OK": "FAIL");
   }
