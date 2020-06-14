@@ -96,6 +96,8 @@ class GrpcServerProtocolService extends RaftServerProtocolServiceImplBase {
     }
 
     private void handleReply(REPLY reply) {
+      String replyStr = reply.toString();
+      System.err.println("wangjie isClosed:" + isClosed + " reply:" + replyStr);
       if (!isClosed.get()) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("{}: reply {}", getId(), replyToString(reply));

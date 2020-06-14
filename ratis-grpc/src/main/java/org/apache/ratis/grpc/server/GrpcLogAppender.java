@@ -242,6 +242,10 @@ public class GrpcLogAppender extends LogAppender {
      */
     @Override
     public void onNext(AppendEntriesReplyProto reply) {
+      System.err.println("wangjie matchIndex onNextImpl:" + ProtoUtils.toString(reply.getServerReply()) + "," + reply.getResult()
+              + ",nextIndex:" + reply.getNextIndex() + ",term:" + reply.getTerm()
+              + ",followerCommit:" + reply.getFollowerCommit() + ",matchIndex:" + reply.getMatchIndex());
+
       AppendEntriesRequest request = pendingRequests.remove(reply);
       if (request != null) {
         request.stopRequestTimer(); // Update completion time

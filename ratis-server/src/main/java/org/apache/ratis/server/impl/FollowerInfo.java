@@ -64,6 +64,7 @@ public class FollowerInfo {
   }
 
   public boolean updateMatchIndex(long newMatchIndex) {
+    System.err.println("wangjie matchIndex updateMatchIndex:" + name + " newMatchIndex:" + newMatchIndex);
     return matchIndex.updateToMax(newMatchIndex, debugIndexChange);
   }
 
@@ -102,6 +103,7 @@ public class FollowerInfo {
 
   public void setSnapshotIndex(long newSnapshotIndex) {
     snapshotIndex.setUnconditionally(newSnapshotIndex, infoIndexChange);
+    System.err.println("wangjie matchIndex setSnapshotIndex:" + name + " newMatchIndex:" + newSnapshotIndex);
     matchIndex.setUnconditionally(newSnapshotIndex, infoIndexChange);
     nextIndex.setUnconditionally(newSnapshotIndex + 1, infoIndexChange);
   }
