@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,11 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.ratis.examples.filestore;
+package org.apache.ratis.grpc;
 
-import org.apache.ratis.grpc.MiniRaftClusterWithGrpc;
+import org.apache.ratis.InstallSnapshotNotificationTests;
 
-public class TestFileStoreAsyncWithGrpc
-    extends FileStoreAsyncBaseTest<MiniRaftClusterWithGrpc>
+public class TestInstallSnapshotNotificationWithGrpc
+    extends InstallSnapshotNotificationTests<MiniRaftClusterWithGrpc>
     implements MiniRaftClusterWithGrpc.FactoryGet {
 }
