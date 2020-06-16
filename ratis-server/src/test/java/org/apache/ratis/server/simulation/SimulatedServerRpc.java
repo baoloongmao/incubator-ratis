@@ -118,8 +118,12 @@ class SimulatedServerRpc implements RaftServerRpc {
   @Override
   public RequestVoteReplyProto requestVote(RequestVoteRequestProto request)
       throws IOException {
+    RaftServerRequest raftServerRequest = new RaftServerRequest(request);
+    System.err.println("wangjie requestVote serverHandler:" + serverHandler.hashCode()
+        + " raftServerRequest:" + raftServerRequest.hashCode() + " queues:" + serverHandler.getRpc().getQueues().hashCode()
+        + " request:" + request);
     RaftServerReply reply = serverHandler.getRpc()
-        .sendRequest(new RaftServerRequest(request));
+        .sendRequest(raftServerRequest);
     return reply.getRequestVote();
   }
 

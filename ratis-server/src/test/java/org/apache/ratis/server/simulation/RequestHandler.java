@@ -58,7 +58,7 @@ public class RequestHandler<REQUEST extends RaftRpcMessage,
 
     this.daemons = new ArrayList<>(numHandlers);
     for(int i = 0; i < numHandlers; i++) {
-      daemons.add(new HandlerDaemon(i));
+      daemons.add(new HandlerDaemon(this, i));
     }
   }
 
@@ -67,6 +67,7 @@ public class RequestHandler<REQUEST extends RaftRpcMessage,
   }
 
   void startDaemon() {
+    System.err.println("wangjie startDaemon serverHandler:" + this.hashCode());
     daemons.forEach(Thread::start);
   }
 
@@ -88,14 +89,18 @@ public class RequestHandler<REQUEST extends RaftRpcMessage,
   void handleRequest(REQUEST request) throws IOException {
     final REPLY reply;
     try {
+      System.err.println("wangjie handleRequest 1 handler:" + this.hashCode() + " request:" + request.hashCode());
       reply = handlerImpl.handleRequest(request);
+      System.err.println("wangjie handleRequest 2 handler:" + this.hashCode() + " request:" + request.hashCode());
     } catch (IOException ioe) {
       LOG.debug("IOException for " + request, ioe);
       rpc.sendReply(request, null, ioe);
       return;
     }
     if (reply != null) {
+      System.err.println("wangjie handleRequest 3 handler:" + this.hashCode() + " request:" + request.hashCode());
       rpc.sendReply(request, reply, null);
+      System.err.println("wangjie handleRequest 4 handler:" + this.hashCode() + " request:" + request.hashCode());
     }
   }
 
@@ -104,8 +109,10 @@ public class RequestHandler<REQUEST extends RaftRpcMessage,
    */
   class HandlerDaemon extends Daemon {
     private final int id;
+    private final RequestHandler handler;
 
-    HandlerDaemon(int id) {
+    HandlerDaemon(RequestHandler handler, int id) {
+      this.handler = handler;
       this.id = id;
     }
 
@@ -121,7 +128,9 @@ public class RequestHandler<REQUEST extends RaftRpcMessage,
           if (Thread.interrupted()) {
             throw new InterruptedException(this + " was interrupted previously.");
           }
-          handleRequest(rpc.takeRequest(getServerId()));
+          System.err.println("wangjie thread run handler:" + handler.hashCode() + " serverId:" + getServerId()
+            + " queues:" + rpc.getQueues().hashCode() + " size:" + rpc.getQueues().get(getServerId()).getRequestQueue().size());
+          handleRequest(rpc.takeRequest(getServerId(), handler));
         } catch (InterruptedIOException e) {
           LOG.info(this + " is interrupted by " + e);
           LOG.trace("TRACE", e);
@@ -134,9 +143,11 @@ public class RequestHandler<REQUEST extends RaftRpcMessage,
             LOG.info(this + " is stopped.");
             break;
           }
+          System.err.println("wangjie exit handler:" + handler.hashCode());
           ExitUtils.terminate(1, this + " is terminating.", t, LOG);
         }
       }
+      System.err.println("wangjie exit while handler:" + handler.hashCode() + " isAlive:" + handlerImpl.isAlive());
     }
   }
 }

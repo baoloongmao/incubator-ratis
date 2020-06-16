@@ -382,6 +382,7 @@ public interface RaftTestUtil {
 
   static RaftPeerId changeLeader(MiniRaftCluster cluster, RaftPeerId oldLeader, Function<String, Exception> constructor)
       throws Exception {
+    System.err.println("wangjie begin changeLeader");
     final String name = JavaUtils.getCallerStackTraceElement().getMethodName() + "-changeLeader";
     cluster.setBlockRequestsFrom(oldLeader.toString(), true);
     try {

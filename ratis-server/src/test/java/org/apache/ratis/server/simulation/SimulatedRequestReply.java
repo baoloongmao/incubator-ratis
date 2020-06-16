@@ -55,6 +55,10 @@ class SimulatedRequestReply<REQUEST extends RaftRpcMessage, REPLY extends RaftRp
     private final Map<REQUEST, ReplyOrException<REPLY>> replyMap
         = new ConcurrentHashMap<>();
 
+    public BlockingQueue<REQUEST> getRequestQueue() {
+      return requestQueue;
+    }
+
     /** Block takeRequest for the requests sent from this server. */
     final AtomicBoolean blockTakeRequestFrom = new AtomicBoolean();
     /** Block sendRequest for the requests sent to this server. */
@@ -64,29 +68,84 @@ class SimulatedRequestReply<REQUEST extends RaftRpcMessage, REPLY extends RaftRp
     /** Delay takeRequest for the requests sent from this server. */
     final AtomicInteger delayTakeRequestFrom = new AtomicInteger();
 
-    REPLY request(REQUEST request) throws InterruptedException, IOException {
+    REPLY request(REQUEST request, String serverId, Map<String, EventQueue<REQUEST, REPLY>> queues) throws InterruptedException, IOException {
       requestQueue.put(request);
+      if (request instanceof RaftServerRequest) {
+//        System.err.println("wangjie request 1 this:" + this.hashCode() +
+//            " thread:" + Thread.currentThread().getId() + " request:" + request +
+//            " queues:" + queues.hashCode() + " queue:" + requestQueue.hashCode() +
+//            " size:" + requestQueue.size() + " serverId:" + serverId);
+      }
       synchronized (this) {
+        if (request instanceof RaftServerRequest) {
+//          System.err.println("wangjie request 2 this:" + this.hashCode() +
+//              " thread:" + Thread.currentThread().getId() + " request:" + request +
+//              " queues:" + queues.hashCode() + " queue:" + requestQueue.hashCode() +
+//              " size:" + requestQueue.size() + " serverId:" + serverId);
+        }
         final Timestamp startTime = Timestamp.currentTime();
         while (startTime.elapsedTimeMs() < TIMEOUT &&
             !replyMap.containsKey(request)) {
+          if (request instanceof RaftServerRequest) {
+//            System.err.println("wangjie request 3 this:" + this.hashCode() +
+//                " thread:" + Thread.currentThread().getId() + " request:" + request +
+//                " queues:" + queues.hashCode() + " queue:" + requestQueue.hashCode() +
+//                " size:" + requestQueue.size() + " serverId:" + serverId);
+          }
           this.wait(TIMEOUT); // no need to be precise here
         }
       }
 
+      if (request instanceof RaftServerRequest) {
+//        System.err.println("wangjie request 4 this:" + this.hashCode() +
+//            " thread:" + Thread.currentThread().getId() + " request:" + request +
+//            " queues:" + queues.hashCode() + " queue:" + requestQueue.hashCode() +
+//            " size:" + requestQueue.size() + " serverId:" + serverId);
+      }
       if (!replyMap.containsKey(request)) {
+        if (request instanceof RaftServerRequest) {
+//          System.err.println("wangjie request 5 this:" + this.hashCode() +
+//              " thread:" + Thread.currentThread().getId() + " request:" + request +
+//              " queues:" + queues.hashCode() + " queue:" + requestQueue.hashCode() +
+//              " size:" + requestQueue.size() + " serverId:" + serverId);
+        }
         throw new IOException("Timeout while waiting for reply of request "
             + request);
       }
+      if (request instanceof RaftServerRequest) {
+//        System.err.println("wangjie request 6 this:" + this.hashCode() +
+//            " thread:" + Thread.currentThread().getId() + " request:" + request +
+//            " queues:" + queues.hashCode() + " queue:" + requestQueue.hashCode() +
+//            " size:" + requestQueue.size() + " serverId:" + serverId);
+      }
       final ReplyOrException<REPLY> re = replyMap.remove(request);
       if (re.ioe != null) {
+        if (request instanceof RaftServerRequest) {
+//          System.err.println("wangjie request 7 this:" + this.hashCode() +
+//              " thread:" + Thread.currentThread().getId() + " request:" + request +
+//              " queues:" + queues.hashCode() + " queue:" + requestQueue.hashCode() +
+//              " size:" + requestQueue.size() + " serverId:" + serverId);
+        }
         throw re.ioe;
+      }
+      if (request instanceof RaftServerRequest) {
+//        System.err.println("wangjie request 8 this:" + this.hashCode() +
+//            " thread:" + Thread.currentThread().getId() + " request:" + request +
+//            " queues:" + queues.hashCode() + " queue:" + requestQueue.hashCode() +
+//            " size:" + requestQueue.size() + " serverId:" + serverId);
       }
       return re.reply;
     }
 
-    REQUEST takeRequest() throws InterruptedException {
-      return requestQueue.take();
+    REQUEST takeRequest(String serverId, Map<String, EventQueue<REQUEST, REPLY>> queues) throws InterruptedException {
+//      System.err.println("wangjie queue before takeRequest this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() +
+//          " queues:" + queues.hashCode() + " queue:" + requestQueue.hashCode() + " size:" +
+//          requestQueue.size() + " serverId:" + serverId);
+      REQUEST request = requestQueue.take();
+//      System.err.println("wangjie queue after takeRequest this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() +
+//           " queues:" + queues.hashCode() + " queue:" + requestQueue.hashCode() + " size:" +
+//          requestQueue.size() + " serverId:" + serverId);
+      return request;
     }
 
     void reply(REQUEST request, REPLY reply, IOException ioe)
@@ -100,6 +159,11 @@ class SimulatedRequestReply<REQUEST extends RaftRpcMessage, REPLY extends RaftRp
 
   private final Map<String, EventQueue<REQUEST, REPLY>> queues
       = new ConcurrentHashMap<>();
+
+  Map<String, EventQueue<REQUEST, REPLY>> getQueues() {
+    return queues;
+  }
+
   private final int simulateLatencyMs;
 
   SimulatedRequestReply(int simulateLatencyMs) {
@@ -118,13 +182,13 @@ class SimulatedRequestReply<REQUEST extends RaftRpcMessage, REPLY extends RaftRp
     }
     try {
       RaftTestUtil.block(q.blockSendRequestTo::get);
-      return q.request(request);
+      return q.request(request, qid, queues);
     } catch (InterruptedException e) {
       throw IOUtils.toInterruptedIOException("", e);
     }
   }
 
-  public REQUEST takeRequest(String qid) throws IOException {
+  public REQUEST takeRequest(String qid, RequestHandler handler) throws IOException {
     final EventQueue<REQUEST, REPLY> q = queues.get(qid);
     if (q == null) {
       throw new IOException("The RPC of " + qid + " has already shutdown.");
@@ -135,7 +199,12 @@ class SimulatedRequestReply<REQUEST extends RaftRpcMessage, REPLY extends RaftRp
       // delay request for testing
       RaftTestUtil.delay(q.delayTakeRequestTo::get);
 
-      request = q.takeRequest();
+      request = q.takeRequest(qid, queues);
+      if (request instanceof RaftServerRequest) {
+        System.err.println("wangjie takeRequest 1 this:" + this.hashCode() +
+            " thread:" + Thread.currentThread().getId() + " qid:" + qid + " request:" + request.hashCode() +
+            " handler:" + handler.hashCode() + " queues:" + queues.hashCode());
+      }
       Preconditions.assertTrue(qid.equals(request.getReplierId()));
 
       // block request for testing
@@ -143,9 +212,18 @@ class SimulatedRequestReply<REQUEST extends RaftRpcMessage, REPLY extends RaftRp
       if (reqQ != null) {
         RaftTestUtil.delay(reqQ.delayTakeRequestFrom::get);
         RaftTestUtil.block(reqQ.blockTakeRequestFrom::get);
+        if (request instanceof RaftServerRequest) {
+        System.err.println("wangjie takeRequest 2 this:" + this.hashCode() +
+            " thread:" + Thread.currentThread().getId() + " qid:" + qid + " request:" + request.hashCode() +
+            " handler:" + handler.hashCode() + " queues:" + queues.hashCode());
+        }
       }
     } catch (InterruptedException e) {
       throw IOUtils.toInterruptedIOException("", e);
+    }
+    if (request instanceof RaftServerRequest) {
+//      System.err.println("wangjie takeRequest 3 this:" + this.hashCode() +
+//          " thread:" + Thread.currentThread().getId() + " qid:" + qid + " request:" + request);
     }
     return request;
   }

@@ -273,7 +273,10 @@ public abstract class RaftBasicTests<CLUSTER extends MiniRaftCluster>
 
   @Test
   public void testWithLoad() throws Exception {
-    runWithNewCluster(NUM_SERVERS, cluster -> testWithLoad(10, 300, false, cluster, LOG));
+    for (int i = 0; i < 1; i ++) {
+      System.err.println("wangjie begin testWithLoad");
+      runWithNewCluster(NUM_SERVERS, cluster -> testWithLoad(10, 300, false, cluster, LOG));
+    }
   }
 
   static void testWithLoad(final int numClients, final int numMessages,
