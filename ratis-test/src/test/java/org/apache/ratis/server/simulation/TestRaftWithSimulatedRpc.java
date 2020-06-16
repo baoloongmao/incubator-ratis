@@ -15,11 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.ratis.examples.filestore;
+package org.apache.ratis.server.simulation;
 
-import org.apache.ratis.grpc.MiniRaftClusterWithGrpc;
+import org.apache.ratis.RaftBasicTests;
 
-public class TestFileStoreAsyncWithGrpc
-    extends FileStoreAsyncBaseTest<MiniRaftClusterWithGrpc>
-    implements MiniRaftClusterWithGrpc.FactoryGet {
+public class TestRaftWithSimulatedRpc
+    extends RaftBasicTests<MiniRaftClusterWithSimulatedRpc>
+    implements MiniRaftClusterWithSimulatedRpc.FactoryGet {
 }
