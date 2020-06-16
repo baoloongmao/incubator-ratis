@@ -407,6 +407,7 @@ public class GrpcLogAppender extends LogAppender {
         default:
           break;
       }
+      notifyAppend();
     }
 
     @Override
