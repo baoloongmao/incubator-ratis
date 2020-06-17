@@ -211,7 +211,6 @@ class SimulatedRequestReply<REQUEST extends RaftRpcMessage, REPLY extends RaftRp
         final EventQueue<REQUEST, REPLY> reqQ = queues.get(request.getRequestorId());
         if (reqQ != null) {
           if (reqQ.blockTakeRequestFrom.get()) {
-            q.requestQueue.put(request);
             continue;
           }
           RaftTestUtil.delay(reqQ.delayTakeRequestFrom::get);
