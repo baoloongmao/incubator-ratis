@@ -194,36 +194,37 @@ class SimulatedRequestReply<REQUEST extends RaftRpcMessage, REPLY extends RaftRp
       throw new IOException("The RPC of " + qid + " has already shutdown.");
     }
 
-    final REQUEST request;
+    REQUEST request;
     try {
       // delay request for testing
       RaftTestUtil.delay(q.delayTakeRequestTo::get);
-
-      request = q.takeRequest(qid, queues);
-      if (request instanceof RaftServerRequest) {
-        System.err.println("wangjie takeRequest 1 this:" + this.hashCode() +
-            " thread:" + Thread.currentThread().getId() + " qid:" + qid + " request:" + request.hashCode() +
-            " handler:" + handler.hashCode() + " queues:" + queues.hashCode());
-      }
-      Preconditions.assertTrue(qid.equals(request.getReplierId()));
-
-      // block request for testing
-      final EventQueue<REQUEST, REPLY> reqQ = queues.get(request.getRequestorId());
-      if (reqQ != null) {
-        RaftTestUtil.delay(reqQ.delayTakeRequestFrom::get);
-        RaftTestUtil.block(reqQ.blockTakeRequestFrom::get);
+      while (true) {
+        request = q.takeRequest(qid, queues);
         if (request instanceof RaftServerRequest) {
-        System.err.println("wangjie takeRequest 2 this:" + this.hashCode() +
-            " thread:" + Thread.currentThread().getId() + " qid:" + qid + " request:" + request.hashCode() +
-            " handler:" + handler.hashCode() + " queues:" + queues.hashCode());
+          System.err.println("wangjie takeRequest 1 this:" + this.hashCode() +
+              " thread:" + Thread.currentThread().getId() + " qid:" + qid + " request:" + request.hashCode() +
+              " handler:" + handler.hashCode() + " queues:" + queues.hashCode());
         }
+        Preconditions.assertTrue(qid.equals(request.getReplierId()));
+
+        // block request for testing
+        final EventQueue<REQUEST, REPLY> reqQ = queues.get(request.getRequestorId());
+        if (reqQ != null) {
+          if (reqQ.blockTakeRequestFrom.get()) {
+            q.requestQueue.put(request);
+            continue;
+          }
+          RaftTestUtil.delay(reqQ.delayTakeRequestFrom::get);
+        }
+        break;
       }
     } catch (InterruptedException e) {
       throw IOUtils.toInterruptedIOException("", e);
     }
     if (request instanceof RaftServerRequest) {
-//      System.err.println("wangjie takeRequest 3 this:" + this.hashCode() +
-//          " thread:" + Thread.currentThread().getId() + " qid:" + qid + " request:" + request);
+      System.err.println("wangjie takeRequest 3 this:" + this.hashCode() +
+          " thread:" + Thread.currentThread().getId() + " qid:" + qid + " request:" + request.hashCode() +
+          " handler:" + handler.hashCode() + " queues:" + queues.hashCode());
     }
     return request;
   }
