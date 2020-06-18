@@ -77,25 +77,8 @@ public abstract class RaftStateMachineExceptionTests<CLUSTER extends MiniRaftClu
   }
 
   @Test
-  public void testHandleStateMachineException() throws Exception {
-    runWithNewCluster(3, this::runTestHandleStateMachineException);
-  }
-
-  private void runTestHandleStateMachineException(CLUSTER cluster) throws Exception {
-    RaftPeerId leaderId = RaftTestUtil.waitForLeader(cluster).getId();
-
-    try(final RaftClient client = cluster.createClient(leaderId)) {
-      client.send(new RaftTestUtil.SimpleMessage("m"));
-      fail("Exception expected");
-    } catch (StateMachineException e) {
-      e.printStackTrace();
-      Assert.assertTrue(e.getCause().getMessage().contains("Fake Exception"));
-    }
-    cluster.shutdown();
-  }
-
-  @Test
   public void testRetryOnStateMachineException() throws Exception {
+    System.err.println("wangjie begin testRetryOnStateMachineException");
     runWithNewCluster(3, this::runTestRetryOnStateMachineException);
   }
 
@@ -138,43 +121,5 @@ public abstract class RaftStateMachineExceptionTests<CLUSTER extends MiniRaftClu
 
     client.close();
     cluster.shutdown();
-  }
-
-  @Test
-  public void testRetryOnExceptionDuringReplication() throws Exception {
-    runWithNewCluster(3, this::runTestRetryOnExceptionDuringReplication);
-  }
-
-  private void runTestRetryOnExceptionDuringReplication(CLUSTER cluster) throws Exception {
-    final RaftServerImpl oldLeader = RaftTestUtil.waitForLeader(cluster);
-    cluster.getLeaderAndSendFirstMessage(true);
-    // turn on the preAppend failure switch
-    failPreAppend = true;
-    final RaftClient client = cluster.createClient(oldLeader.getId());
-    final RaftClientRpc rpc = client.getClientRpc();
-    final long callId = 999;
-    final SimpleMessage message = new SimpleMessage("message");
-    RaftClientRequest r = cluster.newRaftClientRequest(client.getId(), oldLeader.getId(), callId, message);
-    RaftClientReply reply = rpc.sendRequest(r);
-    Objects.requireNonNull(reply.getStateMachineException());
-
-    final RetryCache.CacheEntry oldEntry = RaftServerTestUtil.getRetryEntry(oldLeader, client.getId(), callId);
-    Assert.assertNotNull(oldEntry);
-    Assert.assertTrue(RaftServerTestUtil.isRetryCacheEntryFailed(oldEntry));
-
-    // At this point of time the old leader would have stepped down. wait for leader election to complete
-    final RaftServerImpl leader = RaftTestUtil.waitForLeader(cluster);
-    // retry
-    r = cluster.newRaftClientRequest(client.getId(), leader.getId(), callId, message);
-    reply = rpc.sendRequest(r);
-    Objects.requireNonNull(reply.getStateMachineException());
-
-    RetryCache.CacheEntry currentEntry = RaftServerTestUtil.getRetryEntry(
-        leader, client.getId(), callId);
-    Assert.assertNotNull(currentEntry);
-    Assert.assertTrue(RaftServerTestUtil.isRetryCacheEntryFailed(currentEntry));
-    Assert.assertNotEquals(oldEntry, currentEntry);
-    failPreAppend = false;
-    client.close();
   }
 }
