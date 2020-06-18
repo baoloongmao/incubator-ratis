@@ -17,9 +17,18 @@
  */
 package org.apache.ratis.netty;
 
-import org.apache.ratis.server.impl.RaftStateMachineExceptionTests;
+import org.apache.ratis.RaftBasicTests;
+import org.apache.ratis.server.impl.BlockRequestHandlingInjection;
+import org.junit.Test;
 
-public class TestRaftStateMachineExceptionWithNetty
-    extends RaftStateMachineExceptionTests<MiniRaftClusterWithNetty>
+public class TestRaftWithNetty
+    extends RaftBasicTests<MiniRaftClusterWithNetty>
     implements MiniRaftClusterWithNetty.FactoryGet {
+
+  @Override
+  @Test
+  public void testWithLoad() throws Exception {
+    super.testWithLoad();
+    BlockRequestHandlingInjection.getInstance().unblockAll();
+  }
 }

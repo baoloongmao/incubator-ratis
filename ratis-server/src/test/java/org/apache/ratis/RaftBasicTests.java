@@ -62,7 +62,6 @@ import static org.apache.ratis.server.impl.StateMachineMetrics.RATIS_STATEMACHIN
 import static org.apache.ratis.server.impl.StateMachineMetrics.RATIS_STATEMACHINE_METRICS_DESC;
 import static org.apache.ratis.server.impl.StateMachineMetrics.STATEMACHINE_APPLIED_INDEX_GAUGE;
 import static org.apache.ratis.server.impl.StateMachineMetrics.STATEMACHINE_APPLY_COMPLETED_GAUGE;
-import static org.apache.ratis.server.metrics.RatisMetrics.RATIS_APPLICATION_NAME_METRICS;
 
 public abstract class RaftBasicTests<CLUSTER extends MiniRaftCluster>
     extends BaseTest
@@ -75,6 +74,18 @@ public abstract class RaftBasicTests<CLUSTER extends MiniRaftCluster>
   }
 
   public static final int NUM_SERVERS = 5;
+
+  @Test
+  public void testBasicAppendEntries() throws Exception {
+    runWithNewCluster(NUM_SERVERS, cluster ->
+        runTestBasicAppendEntries(false, false, 10, cluster, LOG));
+  }
+
+  @Test
+  public void testBasicAppendEntriesKillLeader() throws Exception {
+    runWithNewCluster(NUM_SERVERS, cluster ->
+        runTestBasicAppendEntries(false, true, 10, cluster, LOG));
+  }
 
   static CompletableFuture<Void> killAndRestartServer(
       RaftPeerId id, long killSleepMs, long restartSleepMs, MiniRaftCluster cluster, Logger LOG) {
@@ -157,6 +168,12 @@ public abstract class RaftBasicTests<CLUSTER extends MiniRaftCluster>
     }
   }
 
+
+  @Test
+  public void testOldLeaderCommit() throws Exception {
+    runWithNewCluster(NUM_SERVERS, this::runTestOldLeaderCommit);
+  }
+
   void runTestOldLeaderCommit(CLUSTER cluster) throws Exception {
     final RaftServerImpl leader = waitForLeader(cluster);
     final RaftPeerId leaderId = leader.getId();
@@ -192,6 +209,43 @@ public abstract class RaftBasicTests<CLUSTER extends MiniRaftCluster>
 
     cluster.getServerAliveStream().map(s -> s.getState().getLog())
         .forEach(log -> RaftTestUtil.assertLogEntries(log, term, messages));
+  }
+
+  @Test
+  public void testOldLeaderNotCommit() throws Exception {
+    runWithNewCluster(NUM_SERVERS, this::runTestOldLeaderNotCommit);
+  }
+
+  void runTestOldLeaderNotCommit(CLUSTER cluster) throws Exception {
+    final RaftPeerId leaderId = waitForLeader(cluster).getId();
+
+    List<RaftServerImpl> followers = cluster.getFollowers();
+    final RaftServerImpl followerToCommit = followers.get(0);
+    for (int i = 1; i < NUM_SERVERS - 1; i++) {
+      RaftServerImpl follower = followers.get(i);
+      cluster.killServer(follower.getId());
+    }
+
+    SimpleMessage[] messages = SimpleMessage.create(1);
+    RaftTestUtil.sendMessageInNewThread(cluster, leaderId, messages);
+
+    Thread.sleep(cluster.getTimeoutMax().toLong(TimeUnit.MILLISECONDS) + 100);
+    RaftTestUtil.logEntriesContains(followerToCommit.getState().getLog(), messages);
+
+    cluster.killServer(leaderId);
+    cluster.killServer(followerToCommit.getId());
+
+    for (int i = 1; i < NUM_SERVERS - 1; i++) {
+      RaftServerImpl follower = followers.get(i);
+      cluster.restartServer(follower.getId(), false );
+    }
+    waitForLeader(cluster);
+    Thread.sleep(cluster.getTimeoutMax().toLong(TimeUnit.MILLISECONDS) + 100);
+
+    final Predicate<LogEntryProto> predicate = l -> l.getTerm() != 1;
+    cluster.getServerAliveStream()
+            .map(s -> s.getState().getLog())
+            .forEach(log -> RaftTestUtil.checkLogEntries(log, messages, predicate));
   }
 
   static class Client4TestWithLoad extends Thread {
@@ -434,6 +488,8 @@ public abstract class RaftBasicTests<CLUSTER extends MiniRaftCluster>
           (Long)followerCommitGauge.getValue());
       Gauge followerMetric = RaftServerMetrics
           .getPeerCommitIndexGauge(follower, follower);
+      System.out.println(followerCommitGauge.getValue());
+      System.out.println(followerMetric.getValue());
       Assert.assertTrue((Long)followerCommitGauge.getValue()  <= (Long)followerMetric.getValue());
     }
   }
@@ -442,7 +498,7 @@ public abstract class RaftBasicTests<CLUSTER extends MiniRaftCluster>
       String gaugeName) {
 
     MetricRegistryInfo info = new MetricRegistryInfo(server.getMemberId().toString(),
-        RATIS_APPLICATION_NAME_METRICS,
+        "ratis",
         RATIS_STATEMACHINE_METRICS, RATIS_STATEMACHINE_METRICS_DESC);
 
     Optional<RatisMetricRegistry> metricRegistry = MetricRegistries.global().get(info);
