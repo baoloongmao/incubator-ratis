@@ -30,6 +30,7 @@ import org.apache.ratis.server.raftlog.RaftLog;
 import org.apache.ratis.statemachine.SimpleStateMachine4Testing;
 import org.apache.ratis.statemachine.StateMachine;
 import org.apache.ratis.statemachine.TransactionContext;
+import org.apache.ratis.util.JavaUtils;
 import org.apache.ratis.util.Log4jUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -110,11 +111,13 @@ public abstract class RaftStateMachineExceptionTests<CLUSTER extends MiniRaftClu
     // make sure retry cache has the entry
     for (RaftServerImpl server : cluster.iterateServerImpls()) {
       LOG.info("check server " + server.getId());
-      if (server.getState().getLastAppliedIndex() < leaderApplied) {
-        Thread.sleep(1000);
-      }
-      Assert.assertNotNull(
-          RaftServerTestUtil.getRetryEntry(server, client.getId(), callId));
+
+      JavaUtils.attemptRepeatedly(() -> {
+        Assert.assertNotNull(
+            RaftServerTestUtil.getRetryEntry(server, client.getId(), callId));
+        return null;
+      }, 5, BaseTest.ONE_SECOND, "FLUSH", LOG);
+
       final RaftLog log = server.getState().getLog();
       RaftTestUtil.logEntriesContains(log, oldLastApplied + 1, log.getNextIndex(), message);
     }

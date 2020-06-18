@@ -808,6 +808,8 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
         candidateId, candidateTerm, candidateLastEntry);
     LOG.debug("{}: receive requestVote({}, {}, {}, {})",
         getMemberId(), candidateId, candidateGroupId, candidateTerm, candidateLastEntry);
+    long startTime = System.nanoTime();
+    long endTime = System.nanoTime();
     assertLifeCycleState(LifeCycle.States.RUNNING);
     assertGroup(candidateId, candidateGroupId);
 
@@ -824,19 +826,26 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
         final boolean termUpdated = changeToFollower(candidateTerm, true, "recognizeCandidate:" + candidateId);
         // see Section 5.4.1 Election restriction
         if (state.isLogUpToDate(candidateLastEntry) && fs != null) {
-          fs.updateLastRpcTime(FollowerState.UpdateType.REQUEST_VOTE);
           state.grantVote(candidateId);
           voteGranted = true;
         }
+        endTime = System.nanoTime();
+        System.err.println("request vote cost 1: " + (endTime - startTime) / 1000000);
         if (termUpdated || voteGranted) {
           state.persistMetadata(); // sync metafile
         }
+        endTime = System.nanoTime();
+        System.err.println("request vote cost 2: " + (endTime - startTime) / 1000000);
       }
-      if (!voteGranted && shouldSendShutdown(candidateId, candidateLastEntry)) {
+      if (voteGranted) {
+        fs.updateLastRpcTime(FollowerState.UpdateType.REQUEST_VOTE);
+      } else if (shouldSendShutdown(candidateId, candidateLastEntry)) {
         shouldShutdown = true;
       }
       reply = ServerProtoUtils.toRequestVoteReplyProto(candidateId, getMemberId(),
           voteGranted, state.getCurrentTerm(), shouldShutdown);
+      endTime = System.nanoTime();
+      System.err.println("request vote cost 3: " + (endTime - startTime) / 1000000);
       if (LOG.isDebugEnabled()) {
         LOG.debug("{} replies to vote request: {}. Peer's state: {}",
             getMemberId(), ServerProtoUtils.toString(reply), state);
