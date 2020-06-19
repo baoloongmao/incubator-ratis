@@ -47,6 +47,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -93,6 +94,8 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
 
   private AtomicReference<TermIndex> inProgressInstallSnapshotRequest;
 
+  private AtomicBoolean finishStart;
+
   RaftServerImpl(RaftGroup group, StateMachine stateMachine, RaftServerProxy proxy) throws IOException {
     final RaftPeerId id = proxy.getId();
     LOG.info("{}: new RaftServerImpl for {} with {}", id, group, stateMachine);
@@ -117,6 +120,8 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
     this.jmxAdapter = new RaftServerJmxAdapter();
     this.leaderElectionMetrics = LeaderElectionMetrics.getLeaderElectionMetrics(this);
     this.raftServerMetrics = RaftServerMetrics.getRaftServerMetrics(this);
+
+    this.finishStart = new AtomicBoolean(false);
   }
 
   private RetryCache initRetryCache(RaftProperties prop) {
@@ -176,21 +181,30 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
     this.role.transitionRole(newRole);
   }
 
+  boolean isInRaftConf() {
+    RaftConfiguration conf = getRaftConf();
+    if (conf != null && conf.contains(getId())) {
+      return true;
+    }
+    return false;
+  }
+
   boolean start() {
     if (!lifeCycle.compareAndTransition(NEW, STARTING)) {
       return false;
     }
-    RaftConfiguration conf = getRaftConf();
-    if (conf != null && conf.contains(getId())) {
-      LOG.info("{}: start as a follower, conf={}", getMemberId(), conf);
+
+    if (isInRaftConf()) {
+      LOG.info("{}: start as a follower, conf={}", getMemberId(), getRaftConf());
       startAsFollower();
     } else {
-      LOG.info("{}: start with initializing state, conf={}", getMemberId(), conf);
+      LOG.info("{}: start with initializing state, conf={}", getMemberId(), getRaftConf());
       startInitializing();
     }
 
     registerMBean(getId(), getMemberId().getGroupId(), jmxAdapter, jmxAdapter);
     state.start();
+    finishStart.compareAndSet(false, true);
     return true;
   }
 
@@ -209,6 +223,8 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
   private void startAsFollower() {
     setRole(RaftPeerRole.FOLLOWER, "startAsFollower");
     role.startFollowerState(this);
+    System.err.println("wangjie RUNNING startAsFollower lifyCycle:"  + lifeCycle.hashCode() +
+        "  this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
     lifeCycle.transition(RUNNING);
   }
 
@@ -934,10 +950,8 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
         leaderId, leaderTerm, previous, leaderCommit, initializing, entries);
 
     final LifeCycle.State currentState = assertLifeCycleState(LifeCycle.States.STARTING_OR_RUNNING);
-    if (currentState == STARTING) {
-      if (role.getCurrentRole() == null) {
-        throw new ServerNotReadyException(getMemberId() + ": The server role is not yet initialized.");
-      }
+    if (finishStart.get() == false || (currentState == STARTING && role.getCurrentRole() == null)) {
+      throw new ServerNotReadyException(getMemberId() + ": The server role is not yet initialized.");
     }
     assertGroup(leaderId, leaderGroupId);
 
@@ -984,6 +998,8 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
       state.setLeader(leaderId, "appendEntries");
 
       if (!initializing && lifeCycle.compareAndTransition(STARTING, RUNNING)) {
+        System.err.println("wangjie RUNNING appendEntriesAsync lifyCycle:"  + lifeCycle.hashCode() +
+            "  this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
         role.startFollowerState(this);
       }
       followerState = updateLastRpcTime(FollowerState.UpdateType.APPEND_START);
