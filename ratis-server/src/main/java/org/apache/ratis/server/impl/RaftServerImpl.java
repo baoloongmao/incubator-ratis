@@ -952,8 +952,8 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
     CodeInjectionForTesting.execute(APPEND_ENTRIES, getId(),
         leaderId, leaderTerm, previous, leaderCommit, initializing, entries);
 
-    final LifeCycle.State currentState = assertLifeCycleState(LifeCycle.States.STARTING_OR_RUNNING);
-    if (finishStart.get() == false || (currentState == STARTING && role.getCurrentRole() == null)) {
+    assertLifeCycleState(LifeCycle.States.STARTING_OR_RUNNING);
+    if (finishStart.get() == false) {
       throw new ServerNotReadyException(getMemberId() + ": The server role is not yet initialized.");
     }
     assertGroup(leaderId, leaderGroupId);
