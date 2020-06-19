@@ -648,8 +648,14 @@ public class LeaderState {
       // the log gets purged after the statemachine does a snapshot
       final TermIndex[] entriesToCommit = raftLog.getEntries(
           oldLastCommitted + 1, majority + 1);
+      System.err.println("wangjie update Commit majority:" + majority +
+          " commit:" + raftLog.getLastCommittedIndex() +
+          " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
       if (server.getState().updateStatemachine(majority, currentTerm)) {
         watchRequests.update(ReplicationLevel.MAJORITY, majority);
+        System.err.println("wangjie update Metadata majority:" + majority +
+            " commit:" + raftLog.getLastCommittedIndex() +
+            " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
         logMetadata(majority);
         commitIndexChanged();
       }
