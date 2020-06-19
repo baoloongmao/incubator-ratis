@@ -176,16 +176,24 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
     this.role.transitionRole(newRole);
   }
 
+  boolean isInRaftConf() {
+    RaftConfiguration conf = getRaftConf();
+    if (conf != null && conf.contains(getId())) {
+      return true;
+    }
+    return false;
+  }
+
   boolean start() {
     if (!lifeCycle.compareAndTransition(NEW, STARTING)) {
       return false;
     }
-    RaftConfiguration conf = getRaftConf();
-    if (conf != null && conf.contains(getId())) {
-      LOG.info("{}: start as a follower, conf={}", getMemberId(), conf);
+
+    if (isInRaftConf()) {
+      LOG.info("{}: start as a follower, conf={}", getMemberId(), getRaftConf());
       startAsFollower();
     } else {
-      LOG.info("{}: start with initializing state, conf={}", getMemberId(), conf);
+      LOG.info("{}: start with initializing state, conf={}", getMemberId(), getRaftConf());
       startInitializing();
     }
 
@@ -209,6 +217,8 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
   private void startAsFollower() {
     setRole(RaftPeerRole.FOLLOWER, "startAsFollower");
     role.startFollowerState(this);
+    System.err.println("wangjie RUNNING startAsFollower lifyCycle:"  + lifeCycle.hashCode() +
+        "  this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
     lifeCycle.transition(RUNNING);
   }
 
@@ -983,7 +993,9 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
       }
       state.setLeader(leaderId, "appendEntries");
 
-      if (!initializing && lifeCycle.compareAndTransition(STARTING, RUNNING)) {
+      if (!initializing && !isInRaftConf() && lifeCycle.compareAndTransition(STARTING, RUNNING)) {
+        System.err.println("wangjie RUNNING appendEntriesAsync lifyCycle:"  + lifeCycle.hashCode() +
+            "  this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
         role.startFollowerState(this);
       }
       followerState = updateLastRpcTime(FollowerState.UpdateType.APPEND_START);
