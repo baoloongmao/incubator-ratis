@@ -202,20 +202,23 @@ class LeaderElection implements Runnable {
           + " this:" + this
           + " thread:" + Thread.currentThread().getId());
       synchronized (server) {
+        System.err.println("wangjie askForVotes 2 shouldrun:" + shouldRun()
+            + " this:" + this
+            + " thread:" + Thread.currentThread().getId());
         if (!shouldRun()) {
           break;
         }
-        System.err.println("wangjie askForVotes 2 shouldrun:" + shouldRun()
+        System.err.println("wangjie askForVotes 3 shouldrun:" + shouldRun()
             + " this:" + this
             + " thread:" + Thread.currentThread().getId());
         electionTerm = state.initElection();
         conf = state.getRaftConf();
         state.persistMetadata();
-        System.err.println("wangjie askForVotes 3 shouldrun:" + shouldRun()
+        System.err.println("wangjie askForVotes 4 shouldrun:" + shouldRun()
             + " this:" + this
             + " thread:" + Thread.currentThread().getId());
       }
-      System.err.println("wangjie askForVotes 4 shouldrun:" + shouldRun()
+      System.err.println("wangjie askForVotes 5 shouldrun:" + shouldRun()
           + " this:" + this
           + " thread:" + Thread.currentThread().getId());
       LOG.info("{}: begin an election at term {} for {}", this, electionTerm, conf);
