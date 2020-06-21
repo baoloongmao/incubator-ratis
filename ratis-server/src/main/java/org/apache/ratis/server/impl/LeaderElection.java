@@ -198,11 +198,26 @@ class LeaderElection implements Runnable {
       // one round of requestVotes
       final long electionTerm;
       final RaftConfiguration conf;
+      System.err.println("wangjie askForVotes 1 shouldrun:" + shouldRun()
+          + " this:" + this
+          + " thread:" + Thread.currentThread().getId());
       synchronized (server) {
+        if (!shouldRun()) {
+          break;
+        }
+        System.err.println("wangjie askForVotes 2 shouldrun:" + shouldRun()
+            + " this:" + this
+            + " thread:" + Thread.currentThread().getId());
         electionTerm = state.initElection();
         conf = state.getRaftConf();
         state.persistMetadata();
+        System.err.println("wangjie askForVotes 3 shouldrun:" + shouldRun()
+            + " this:" + this
+            + " thread:" + Thread.currentThread().getId());
       }
+      System.err.println("wangjie askForVotes 4 shouldrun:" + shouldRun()
+          + " this:" + this
+          + " thread:" + Thread.currentThread().getId());
       LOG.info("{}: begin an election at term {} for {}", this, electionTerm, conf);
 
       TermIndex lastEntry = state.getLog().getLastEntryTermIndex();

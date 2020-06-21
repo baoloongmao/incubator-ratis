@@ -110,12 +110,12 @@ public final class RaftServerMetrics extends RatisMetrics {
    * Register a follower with this Leader Metrics registry instance.
    * @param peer {@Link RaftPeer} representing the follower
    */
-  public void addFollower(RaftPeer peer) {
+  public void addFollower(String leader, RaftPeer peer) {
     String followerName = peer.getId().toString();
     String followerHbMetricKey = String.format(
         FOLLOWER_LAST_HEARTBEAT_ELAPSED_TIME_METRIC,
         followerName);
-
+    System.err.println("wangjie addFollower:" + followerName + " leader:" + leader);
     followerLastHeartbeatElapsedTimeMap.put(followerName, 0L);
     registry.gauge(followerHbMetricKey,
         () -> () -> followerLastHeartbeatElapsedTimeMap.get(followerName));

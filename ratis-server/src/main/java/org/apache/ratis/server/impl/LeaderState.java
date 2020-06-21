@@ -423,7 +423,7 @@ public class LeaderState {
               server.getRpcSlownessTimeoutMs());
           LogAppender logAppender = server.newLogAppender(this, f);
           peerIdFollowerInfoMap.put(peer.getId(), f);
-          raftServerMetrics.addFollower(f.getPeer());
+          raftServerMetrics.addFollower(name, f.getPeer());
           logAppenderMetrics.addFollowerGauges(f);
           return logAppender;
         }).collect(Collectors.toList());

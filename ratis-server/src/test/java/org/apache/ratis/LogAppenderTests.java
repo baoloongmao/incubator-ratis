@@ -147,6 +147,9 @@ public abstract class LogAppenderTests<CLUSTER extends MiniRaftCluster>
       // Try to get Heartbeat metrics for follower.
       RaftServerMetrics followerMetrics = RaftServerMetrics.getRaftServerMetrics(followerServer);
       // Metric should not exist. It only exists in leader.
+      if (!followerMetrics.getRegistry().getGauges((s, m) -> s.contains("lastHeartbeatElapsedTime")).isEmpty()) {
+        System.err.println("wangjie not empty follower:" + followerId + " leader:" + leaderServer.getMemberId());
+      }
       assertTrue(followerMetrics.getRegistry().getGauges((s, m) -> s.contains("lastHeartbeatElapsedTime")).isEmpty());
       for (boolean heartbeat : new boolean[] { true, false }) {
         if (!(followerMetrics.getFollowerAppendEntryTimer(heartbeat).getMeanRate() > 0.0d)) {
