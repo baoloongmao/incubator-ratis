@@ -177,6 +177,10 @@ public final class RaftServerMetrics extends RatisMetrics {
   }
 
   public Timer getFollowerAppendEntryTimer(boolean isHeartbeat) {
+    System.err.println("wangjie metric getFollowerAppendEntryTimer isHeartbeat:" + isHeartbeat +
+        " registry:" + registry.hashCode() +
+        " timer:" + registry.timer(FOLLOWER_APPEND_ENTRIES_LATENCY + (isHeartbeat ? "_heartbeat" : "")).hashCode() +
+        " thread:" + Thread.currentThread().getId());
     return registry.timer(FOLLOWER_APPEND_ENTRIES_LATENCY + (isHeartbeat ? "_heartbeat" : ""));
   }
 

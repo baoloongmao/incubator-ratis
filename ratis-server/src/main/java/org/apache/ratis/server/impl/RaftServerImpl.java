@@ -962,6 +962,13 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
     final long currentTerm;
     final long followerCommit = state.getLog().getLastCommittedIndex();
     final Optional<FollowerState> followerState;
+    System.err.println("wangjie metric begin followerId:" + this.role +
+        " followerMetrics:" + raftServerMetrics.hashCode() +
+        " heartbeat:" + isHeartbeat +
+        " timer:" + raftServerMetrics.getFollowerAppendEntryTimer(isHeartbeat).hashCode() +
+        " meat rate:" + raftServerMetrics.getFollowerAppendEntryTimer(isHeartbeat).getMeanRate() +
+        " thread:" + Thread.currentThread().getId());
+
     Timer.Context timer = raftServerMetrics.getFollowerAppendEntryTimer(isHeartbeat).time();
     synchronized (this) {
       final boolean recognized = state.recognizeLeader(leaderId, leaderTerm);
@@ -1029,6 +1036,12 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
       logAppendEntries(isHeartbeat, () ->
           getMemberId() + ": succeeded to handle AppendEntries. Reply: " + ServerProtoUtils.toString(reply));
       timer.stop();  // TODO: future never completes exceptionally?
+      System.err.println("wangjie metric end followerId:" + this.role +
+          " followerMetrics:" + raftServerMetrics.hashCode() +
+          " heartbeat:" + isHeartbeat +
+          " timer:" + raftServerMetrics.getFollowerAppendEntryTimer(isHeartbeat).hashCode() +
+          " meat rate:" + raftServerMetrics.getFollowerAppendEntryTimer(isHeartbeat).getMeanRate() +
+          " thread:" + Thread.currentThread().getId());
       return reply;
     });
   }
