@@ -824,7 +824,6 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
         final boolean termUpdated = changeToFollower(candidateTerm, true, "recognizeCandidate:" + candidateId);
         // see Section 5.4.1 Election restriction
         if (state.isLogUpToDate(candidateLastEntry) && fs != null) {
-          fs.updateLastRpcTime(FollowerState.UpdateType.REQUEST_VOTE);
           state.grantVote(candidateId);
           voteGranted = true;
         }
@@ -832,7 +831,9 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
           state.persistMetadata(); // sync metafile
         }
       }
-      if (!voteGranted && shouldSendShutdown(candidateId, candidateLastEntry)) {
+      if (voteGranted) {
+        fs.updateLastRpcTime(FollowerState.UpdateType.REQUEST_VOTE);
+      } else if(shouldSendShutdown(candidateId, candidateLastEntry)) {
         shouldShutdown = true;
       }
       reply = ServerProtoUtils.toRequestVoteReplyProto(candidateId, getMemberId(),
