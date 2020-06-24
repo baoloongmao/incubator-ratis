@@ -24,6 +24,7 @@ import org.apache.ratis.protocol.ClientId;
 import org.apache.ratis.protocol.RaftGroupId;
 import org.apache.ratis.protocol.RaftPeer;
 import org.apache.ratis.protocol.RaftPeerId;
+import org.apache.ratis.server.RaftServer;
 import org.apache.ratis.util.JavaUtils;
 import org.apache.ratis.util.Log4jUtils;
 import org.apache.ratis.util.TimeDuration;
@@ -78,6 +79,23 @@ public class RaftServerTestUtil {
       } else if (server.isAlive()) {
         // The server is successfully removed from the conf
         // It may not be shutdown since it may not be able to talk to the new leader (who is not in its conf).
+        String oldConf = "";
+        String newConf = "";
+        for (RaftPeer peer : server.getRaftConf().getPeersInOldConf()) {
+          oldConf = oldConf + "," + peer.getId();
+        }
+
+        for (RaftPeer peer : server.getRaftConf().getPeersInConf()) {
+          newConf = newConf + "," + peer.getId();
+        }
+        if (!server.getRaftConf().isStable()) {
+          System.err.println("wangjie waitAndCheckNewConf is not stable:" + server.getMemberId()
+            + " oldConf:" + oldConf + " newConf:" + newConf);
+        }
+        if (server.getRaftConf().containsInConf(server.getId())) {
+          System.err.println("wangjie waitAndCheckNewConf containsInConf:" + server.getMemberId()
+              + " oldConf:" + oldConf + " newConf:" + newConf);
+        }
         Assert.assertTrue(server.getRaftConf().isStable());
         Assert.assertFalse(server.getRaftConf().containsInConf(server.getId()));
       }
