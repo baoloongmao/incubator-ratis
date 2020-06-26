@@ -211,12 +211,15 @@ public class LogAppender {
     final TermIndex previous = getPrevious(follower.getNextIndex());
     final long snapshotIndex = follower.getSnapshotIndex();
     final long heartbeatRemainingMs = getHeartbeatRemainingTime();
+    System.err.println("wangjie runAppenderImpl 5 this:" + this.hashCode() + " thread:" + Thread.currentThread().getId()
+      + " heartbeatRemainingMs:" + heartbeatRemainingMs + " lastRpcTime:" + follower.getLastRpcTime().elapsedTimeMs()
+      + " leaderNext:" + raftLog.getNextIndex() + " followerNext:" + follower.getNextIndex());
     if (heartbeatRemainingMs <= 0L) {
       // heartbeat
       return leaderState.newAppendEntriesRequestProto(
           getFollowerId(), previous, Collections.emptyList(), !follower.isAttendingVote(), callId);
     }
-
+    System.err.println("wangjie runAppenderImpl 6 this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
     Preconditions.assertTrue(buffer.isEmpty(), () -> "buffer has " + buffer.getNumElements() + " elements.");
 
     final long leaderNext = raftLog.getNextIndex();
@@ -227,6 +230,7 @@ public class LogAppender {
         break;
       }
     }
+    System.err.println("wangjie leaderNext:" + leaderNext + " followerNext:" + followerNext + " buffer.size:" + buffer.size());
     if (buffer.isEmpty()) {
       return null;
     }
@@ -561,6 +565,8 @@ public class LogAppender {
   }
 
   private boolean shouldAppendEntries(long followerIndex) {
+    System.err.println("wangjie shouldAppendEntries:" + (followerIndex < raftLog.getNextIndex()) +
+        " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
     return followerIndex < raftLog.getNextIndex();
   }
 

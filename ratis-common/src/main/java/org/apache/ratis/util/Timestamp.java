@@ -75,6 +75,10 @@ public final class Timestamp implements Comparable<Timestamp> {
     return d / NANOSECONDS_PER_MILLISECOND;
   }
 
+  public long getNanos() {
+    return nanos;
+  }
+
   /**
    * @return the elapsed time in nanoseconds.
    *         If the timestamp is a future time, the returned value is negative.
