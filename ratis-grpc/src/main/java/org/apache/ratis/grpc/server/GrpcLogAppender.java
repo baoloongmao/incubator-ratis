@@ -103,11 +103,8 @@ public class GrpcLogAppender extends LogAppender {
   protected void runAppenderImpl() throws IOException {
     boolean shouldAppendLog;
     for(; isAppenderRunning(); mayWait()) {
-      System.err.println("wangjie runAppenderImpl 1 this:" + this.hashCode() + " thread:" + Thread.currentThread().getId() +
-          " shouldSendRequest:" + shouldSendRequest());
       shouldAppendLog = true;
       if (shouldSendRequest()) {
-        System.err.println("wangjie runAppenderImpl 2 this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
         if (installSnapshotEnabled) {
           SnapshotInfo snapshot = shouldInstallSnapshot();
           if (snapshot != null) {
@@ -121,8 +118,6 @@ public class GrpcLogAppender extends LogAppender {
             shouldAppendLog = false;
           }
         }
-        System.err.println("wangjie runAppenderImpl 3 this:" + this.hashCode() + " thread:" + Thread.currentThread().getId()
-         + " shouldHeartbeat:" + shouldHeartbeat() + " shouldAppendLog:" + shouldAppendLog + " shouldWait:" + shouldWait());
         if (shouldHeartbeat() || (shouldAppendLog && !shouldWait())) {
           // keep appending log entries or sending heartbeats
           appendLog();
@@ -135,8 +130,6 @@ public class GrpcLogAppender extends LogAppender {
   }
 
   private long getWaitTimeMs() {
-    System.err.println("wangjie getWaitTimeMs this:" + this.hashCode() + " thread:" + Thread.currentThread().getId()
-        + " shouldSendRequest:" + shouldSendRequest() + " shouldWait:" + shouldWait());
     if (!shouldSendRequest()) {
       return getHeartbeatRemainingTime(); // No requests, wait until heartbeat
     } else if (shouldWait()) {
@@ -180,7 +173,6 @@ public class GrpcLogAppender extends LogAppender {
     final AppendEntriesRequestProto pending;
     final AppendEntriesRequest request;
     final StreamObserver<AppendEntriesRequestProto> s;
-    System.err.println("wangjie runAppenderImpl 4 this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
     synchronized (this) {
       // prepare and enqueue the append request. note changes on follower's
       // nextIndex and ops on pendingRequests should always be associated
@@ -212,9 +204,6 @@ public class GrpcLogAppender extends LogAppender {
     scheduler.onTimeout(requestTimeoutDuration,
         () -> timeoutAppendRequest(request.getCallId(), request.isHeartbeat()),
         LOG, () -> "Timeout check failed for append entry request: " + request);
-    System.err.println("wangjie sendRequest follower:" + getFollower().hashCode() +
-        " thread:" + Thread.currentThread().getId() +
-        " LastRpcSendTime:" + Timestamp.currentTime().getNanos());
     getFollower().updateLastRpcSendTime();
   }
 
@@ -287,7 +276,6 @@ public class GrpcLogAppender extends LogAppender {
           if (getFollower().updateMatchIndex(reply.getMatchIndex())) {
             submitEventOnSuccessAppend();
           }
-          System.err.println("wangjie append log succ follower:" + getFollowerId() + " next index:" + reply.getNextIndex());
           break;
         case NOT_LEADER:
           grpcServerMetrics.onRequestNotLeader(getFollowerId().toString());

@@ -142,29 +142,9 @@ public class FollowerInfo {
   /** Update lastRpcSendTime to the current time. */
   public void updateLastRpcSendTime() {
     lastRpcSendTime.set(Timestamp.currentTime());
-    long ms = System.currentTimeMillis();
-    long nano = System.nanoTime();
-    long responseelapsed = lastRpcResponseTime.get().elapsedTimeMs();
-    long sendelapsed = lastRpcSendTime.get().elapsedTimeMs();
-    System.err.println("wangjie updateLastRpcSendTime lastRpcResponseTime:" + lastRpcResponseTime.get().getNanos()
-        + "," + responseelapsed
-        + " lastRpcSendTime:" + lastRpcSendTime.get().getNanos()
-        + "," + sendelapsed
-        + " thread:" + Thread.currentThread().getId() + " follower:" + this.getName() + " this:" + this.hashCode()
-        + " time:" + ms + "," + nano);
   }
 
   public Timestamp getLastRpcTime() {
-    long ms = System.currentTimeMillis();
-    long nano = System.nanoTime();
-    long responseelapsed = lastRpcResponseTime.get().elapsedTimeMs();
-    long sendelapsed = lastRpcSendTime.get().elapsedTimeMs();
-    System.err.println("wangjie getLastRpcTime lastRpcResponseTime:" + lastRpcResponseTime.get().getNanos()
-        + "," + responseelapsed
-        + " lastRpcSendTime:" + lastRpcSendTime.get().getNanos()
-        + "," + sendelapsed
-      + " thread:" + Thread.currentThread().getId() + " follower:" + this.getName() + " this:" + this.hashCode()
-        + " time:" + ms + "," + nano);
     return Timestamp.latest(lastRpcResponseTime.get(), lastRpcSendTime.get());
   }
 
