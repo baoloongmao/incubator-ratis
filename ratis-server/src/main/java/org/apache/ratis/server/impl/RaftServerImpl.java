@@ -958,7 +958,8 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
         () -> getMemberId() + ": receive appendEntries(" + leaderId + ", " + leaderTerm + ", "
             + previous + ", " + leaderCommit + ", " + initializing
             + ", commits" + ProtoUtils.toString(commitInfos)
-            + ", entries: " + ServerProtoUtils.toString(entries));
+            + ", entries: " + ServerProtoUtils.toString(entries) + ", entries hashcode:" + entries.hashCode() +
+            " callId:" + callId);
 
     final long currentTerm;
     final long followerCommit = state.getLog().getLastCommittedIndex();
@@ -1009,6 +1010,23 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
 
     final List<CompletableFuture<Long>> futures = entries.length == 0 ? Collections.emptyList()
         : state.getLog().append(entries);
+
+    String strFutures = "";
+    for (CompletableFuture<Long> future : futures) {
+      strFutures += "," + future.hashCode();
+    }
+
+    String entriesHashcode = "";
+    for (LogEntryProto entry : entries) {
+      entriesHashcode += "," + entry.hashCode();
+    }
+    if (!strFutures.isEmpty()) {
+      System.err.println("wangjie appendEntriesAsync futures:" + strFutures +
+          " entries:" + entries.hashCode() + " callid:" + callId +
+          " entries hacode:" + entriesHashcode +
+          " server:" + this.getMemberId());
+    }
+
     commitInfos.forEach(commitInfoCache::update);
 
     if (!isHeartbeat) {
@@ -1028,7 +1046,8 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
             isHeartbeat);
       }
       logAppendEntries(isHeartbeat, () ->
-          getMemberId() + ": succeeded to handle AppendEntries. Reply: " + ServerProtoUtils.toString(reply));
+          getMemberId() + ": succeeded to handle AppendEntries. Reply: " + ServerProtoUtils.toString(reply) +
+          " entries hashcode:" + entries.hashCode() + " callId:" + callId);
       timer.stop();  // TODO: future never completes exceptionally?
       return reply;
     });

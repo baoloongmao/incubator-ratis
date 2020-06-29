@@ -226,6 +226,7 @@ public class LogAppender {
         break;
       }
     }
+    System.err.println("wangjie leaderNext:" + leaderNext + " followerNext:" + followerNext + " buffer.size:" + buffer.size());
     if (buffer.isEmpty()) {
       return null;
     }

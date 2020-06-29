@@ -742,15 +742,18 @@ public class LeaderState {
 
     final long[] indices = new long[length];
     List<FollowerInfo> followerInfos = getFollowerInfos(followerIDs);
+    String str = "";
     for (int i = 0; i < followerInfos.size(); i++) {
       indices[i] = getFollowerIndex.applyAsLong(followerInfos.get(i));
+      str = str + ",follower:(" + followerInfos.get(i).getPeer().getId() + "," + indices[i] + ")";
     }
 
     if (includeSelf) {
       // note that we also need to wait for the local disk I/O
       indices[length - 1] = getLogIndex.getAsLong();
+      str = str + ",leader:" + indices[length - 1];
     }
-
+    System.err.println("wangjie getSorted:" + str);
     Arrays.sort(indices);
     return indices;
   }

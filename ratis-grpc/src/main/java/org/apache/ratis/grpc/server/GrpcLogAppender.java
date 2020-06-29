@@ -276,6 +276,10 @@ public class GrpcLogAppender extends LogAppender {
           if (getFollower().updateMatchIndex(reply.getMatchIndex())) {
             submitEventOnSuccessAppend();
           }
+          System.err.println("wangjie append log succ follower:" + getFollowerId() +
+              " next:" + reply.getNextIndex() +
+              " match:" + reply.getMatchIndex() +
+              " commit:" + reply.getFollowerCommit());
           break;
         case NOT_LEADER:
           grpcServerMetrics.onRequestNotLeader(getFollowerId().toString());

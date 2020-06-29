@@ -57,7 +57,7 @@ public abstract class InstallSnapshotNotificationTests<CLUSTER extends MiniRaftC
   static final Logger LOG = LoggerFactory.getLogger(InstallSnapshotNotificationTests.class);
 
   {
-    Log4jUtils.setLogLevel(RaftLog.LOG, Level.DEBUG);
+    Log4jUtils.setLogLevel(RaftLog.LOG, Level.TRACE);
   }
 
   {

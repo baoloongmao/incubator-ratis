@@ -98,6 +98,12 @@ class SegmentedRaftLogWorker implements Runnable {
     private volatile long index;
 
     void offerOrCompleteFuture(WriteLog writeLog) {
+      if (writeLog.getEntry() != null) {
+        System.err.println("wangjie execute after write endIndex:" + writeLog.getEndIndex() + " index:" + index +
+            " entry hashcode:" + writeLog.getEntry().hashCode() +
+            " entry:" + writeLog.getEntry() +
+            " this:" + writeLog.hashCode() + " thread:" + Thread.currentThread().getId());
+      }
       if (writeLog.getEndIndex() <= index || !offer(writeLog)) {
         writeLog.completeFuture();
       }
@@ -370,7 +376,7 @@ class SegmentedRaftLogWorker implements Runnable {
 
   private void updateFlushedIndexIncreasingly() {
     final long i = lastWrittenIndex;
-    flushIndex.updateIncreasingly(i, traceIndexChange);
+    flushIndex.updateIncreasingly(i, infoIndexChange);
     postUpdateFlushedIndex();
     writeTasks.updateIndex(i);
   }
@@ -446,7 +452,7 @@ class SegmentedRaftLogWorker implements Runnable {
     }
   }
 
-  private class WriteLog extends Task {
+  public class WriteLog extends Task {
     private final LogEntryProto entry;
     private final CompletableFuture<?> stateMachineFuture;
     private final CompletableFuture<Long> combined;
@@ -507,6 +513,16 @@ class SegmentedRaftLogWorker implements Runnable {
         raftLogMetrics.onRaftLogFlush();
         flushWrites();
       }
+      if (entry != null) {
+        System.err.println("wangjie execute write this:" + this.hashCode() +
+            " thread:" + Thread.currentThread().getId() +
+            " entry hashcode:" + entry.hashCode() +
+            " entry:" + entry);
+      }
+    }
+
+    LogEntryProto getEntry() {
+      return entry;
     }
 
     @Override

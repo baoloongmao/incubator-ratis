@@ -93,6 +93,8 @@ public class SegmentedRaftLog extends RaftLog {
     }
 
     final void completeFuture() {
+      System.err.println("wangjie completeFuture future:" + future.hashCode() +
+          " endIndex:" + getEndIndex() + " this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
       final boolean completed = future.complete(getEndIndex());
       Preconditions.assertTrue(completed,
           () -> this + " is already " + StringUtils.completableFuture2String(future, false));
