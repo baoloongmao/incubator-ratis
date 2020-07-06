@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.channels.WritableByteChannel;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -54,7 +53,6 @@ public interface StateMachine extends Closeable {
   }
 
   interface DataApi {
-    /** A noop implementation of {@link DataApi}. */
     DataApi DEFAULT = new DataApi() {};
 
     /**
@@ -72,25 +70,6 @@ public interface StateMachine extends Closeable {
      * @return a future for the write task
      */
     default CompletableFuture<?> write(LogEntryProto entry) {
-      return CompletableFuture.completedFuture(null);
-    }
-
-    /**
-     * Create asynchronously a {@link DataStream} to stream state machine data.
-     * The state machine may use the first message (i.e. request.getMessage()) as the header to create the stream.
-     *
-     * @return a future of the stream.
-     */
-    default CompletableFuture<DataStream> stream(RaftClientRequest request) {
-      return CompletableFuture.completedFuture(null);
-    }
-
-    /**
-     * Link asynchronously the given stream with the given log entry.
-     *
-     * @return a future for the link task.
-     */
-    default CompletableFuture<?> link(DataStream stream, LogEntryProto entry) {
       return CompletableFuture.completedFuture(null);
     }
 
@@ -116,37 +95,6 @@ public interface StateMachine extends Closeable {
     }
   }
 
-  /**
-   * For streaming state machine data.
-   */
-  interface DataStream {
-    /** @return a channel for streaming state machine data. */
-    WritableByteChannel getWritableByteChannel();
-
-    /**
-     * Clean up asynchronously this stream.
-     *
-     * When there is an error, this method is invoked to clean up the associated resources.
-     * If this stream is not yet linked (see {@link DataApi#link(DataStream, LogEntryProto)}),
-     * the state machine may choose to remove the data or to keep the data internally for future recovery.
-     * If this stream is already linked, the data must not be removed.
-     *
-     * @return a future for the cleanup task.
-     */
-    CompletableFuture<?> cleanUp();
-  }
-
-  /**
-   * Get the optional {@link DataApi} object.
-   *
-   * If this {@link StateMachine} chooses to support {@link DataApi},
-   * it may either implement {@link DataApi} directly or override this method to return a {@link DataApi} object.
-   *
-   * Otherwise, this {@link StateMachine} does not support {@link DataApi}.
-   * Then, this method returns the default noop {@link DataApi} object.
-   *
-   * @return The optional {@link DataApi} object.
-   */
   default DataApi data() {
     return this instanceof DataApi? (DataApi)this : DataApi.DEFAULT;
   }
