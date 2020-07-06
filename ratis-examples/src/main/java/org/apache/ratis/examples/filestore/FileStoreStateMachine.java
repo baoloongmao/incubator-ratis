@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -110,7 +110,7 @@ public class FileStoreStateMachine extends BaseStateMachine {
   }
 
   @Override
-  public CompletableFuture<Integer> write(LogEntryProto entry) {
+  public CompletableFuture<Integer> writeStateMachineData(LogEntryProto entry) {
     final StateMachineLogEntryProto smLog = entry.getStateMachineLogEntry();
     final ByteString data = smLog.getLogData();
     final FileStoreRequestProto proto;
@@ -132,7 +132,7 @@ public class FileStoreStateMachine extends BaseStateMachine {
   }
 
   @Override
-  public CompletableFuture<ByteString> read(LogEntryProto entry) {
+  public CompletableFuture<ByteString> readStateMachineData(LogEntryProto entry) {
     final StateMachineLogEntryProto smLog = entry.getStateMachineLogEntry();
     final ByteString data = smLog.getLogData();
     final FileStoreRequestProto proto;

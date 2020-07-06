@@ -87,9 +87,12 @@ public class SimpleStateMachine4Testing extends BaseStateMachine {
   private final Daemon checkpointer;
   private final SimpleStateMachineStorage storage = new SimpleStateMachineStorage();
   private final RaftProperties properties = new RaftProperties();
-  private final long segmentMaxSize = RaftServerConfigKeys.Log.segmentSizeMax(properties).getSize();
-  private final long preallocatedSize = RaftServerConfigKeys.Log.preallocatedSize(properties).getSize();
-  private final int bufferSize = RaftServerConfigKeys.Log.writeBufferSize(properties).getSizeInt();
+  private long segmentMaxSize =
+      RaftServerConfigKeys.Log.segmentSizeMax(properties).getSize();
+  private long preallocatedSize =
+      RaftServerConfigKeys.Log.preallocatedSize(properties).getSize();
+  private int bufferSize =
+      RaftServerConfigKeys.Log.writeBufferSize(properties).getSizeInt();
 
   private volatile boolean running = true;
 
@@ -357,19 +360,19 @@ public class SimpleStateMachine4Testing extends BaseStateMachine {
   }
 
   @Override
-  public CompletableFuture<Void> write(LogEntryProto entry) {
+  public CompletableFuture<?> writeStateMachineData(LogEntryProto entry) {
     blocking.await(Blocking.Type.WRITE_STATE_MACHINE_DATA);
     return CompletableFuture.completedFuture(null);
   }
 
   @Override
-  public CompletableFuture<ByteString> read(LogEntryProto entry) {
+  public CompletableFuture<ByteString> readStateMachineData(LogEntryProto entry) {
     blocking.await(Blocking.Type.READ_STATE_MACHINE_DATA);
     return CompletableFuture.completedFuture(STATE_MACHINE_DATA);
   }
 
   @Override
-  public CompletableFuture<Void> flush(long index) {
+  public CompletableFuture<Void> flushStateMachineData(long index) {
     blocking.await(Blocking.Type.FLUSH_STATE_MACHINE_DATA);
     return CompletableFuture.completedFuture(null);
   }
