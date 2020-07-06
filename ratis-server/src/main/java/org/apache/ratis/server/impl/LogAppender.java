@@ -93,7 +93,7 @@ public class LogAppender {
           if (!lifeCycle.compareAndTransition(CLOSING, CLOSED)) {
             lifeCycle.transitionIfNotEqual(EXCEPTION);
           }
-          if (lifeCycle.getCurrentState() == EXCEPTION) {
+          if (lifeCycle.getCurrentState() == EXCEPTION && raftLog.isOpened()) {
             leaderState.restartSender(LogAppender.this);
           }
         }
