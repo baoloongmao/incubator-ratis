@@ -208,14 +208,7 @@ class LeaderElection implements Runnable {
       }
       LOG.info("{}: begin an election at term {} for {}", this, electionTerm, conf);
 
-      TermIndex lastEntry = state.getLog().getLastEntryTermIndex();
-      if (lastEntry == null) {
-        // lastEntry may need to be derived from snapshot
-        SnapshotInfo snapshot = state.getLatestSnapshot();
-        if (snapshot != null) {
-          lastEntry = snapshot.getTermIndex();
-        }
-      }
+      TermIndex lastEntry = state.getLastEntry();
 
       final ResultAndTerm r;
       final Collection<RaftPeer> others = conf.getOtherPeers(server.getId());
@@ -262,7 +255,7 @@ class LeaderElection implements Runnable {
     int submitted = 0;
     for (final RaftPeer peer : others) {
       final RequestVoteRequestProto r = server.createRequestVoteRequest(
-          peer.getId(), electionTerm, lastEntry);
+          peer.getId(), electionTerm, lastEntry, false);
       voteExecutor.submit(() -> server.getServerRpc().requestVote(r));
       submitted++;
     }

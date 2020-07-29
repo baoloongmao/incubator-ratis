@@ -411,6 +411,18 @@ public class ServerState implements Closeable {
     return server.getStateMachine().getLatestSnapshot();
   }
 
+  TermIndex getLastEntry() {
+    TermIndex lastEntry = getLog().getLastEntryTermIndex();
+    if (lastEntry == null) {
+      // lastEntry may need to be derived from snapshot
+      SnapshotInfo snapshot = getLatestSnapshot();
+      if (snapshot != null) {
+        lastEntry = snapshot.getTermIndex();
+      }
+    }
+    return  lastEntry;
+  }
+
   public long getLatestInstalledSnapshotIndex() {
     final TermIndex ti = latestInstalledSnapshot.get();
     return ti != null? ti.getIndex(): 0L;
