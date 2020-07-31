@@ -854,18 +854,17 @@ public class LeaderState {
    * if an election timeout elapses without a successful
    * round of heartbeats to a majority of its cluster.
    */
-  private void checkLeadership() {
+  public boolean checkLeadership() {
     if (!server.getRole().isLeader()) {
-      return;
+      return false;
     }
-
     // The initial value of lastRpcResponseTime in FollowerInfo is set by
     // LeaderState::addSenders(), which is fake and used to trigger an
     // immediate round of AppendEntries request. Since candidates collect
     // votes from majority before becoming leader, without seeing higher term,
     // ideally, A leader is legal for election timeout if become leader soon.
     if (server.getRole().getRoleElapsedTimeMs() < server.getMaxTimeoutMs()) {
-      return;
+      return true;
     }
 
     final List<RaftPeerId> activePeers = senders.stream()
@@ -879,7 +878,7 @@ public class LeaderState {
 
     if (conf.hasMajority(activePeers, server.getId())) {
       // leadership check passed
-      return;
+      return true;
     }
 
     List<FollowerInfo> followers = senders.stream()
@@ -892,6 +891,7 @@ public class LeaderState {
 
     // step down as follower
     stepDown(currentTerm);
+    return false;
   }
 
   void replyPendingRequest(long logIndex, RaftClientReply reply) {
