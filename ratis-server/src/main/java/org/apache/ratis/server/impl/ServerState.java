@@ -221,10 +221,10 @@ public class ServerState implements Closeable {
   /**
    * Become a candidate and start leader election
    */
-  long initElection() {
+  long initElection(boolean preVote) {
     votedFor = getMemberId().getPeerId();
     setLeader(null, "initElection");
-    return currentTerm.incrementAndGet();
+    return preVote ? currentTerm.get() : currentTerm.incrementAndGet();
   }
 
   void persistMetadata() throws IOException {
@@ -409,6 +409,18 @@ public class ServerState implements Closeable {
 
   SnapshotInfo getLatestSnapshot() {
     return server.getStateMachine().getLatestSnapshot();
+  }
+
+  TermIndex getLastEntry() {
+    TermIndex lastEntry = getLog().getLastEntryTermIndex();
+    if (lastEntry == null) {
+      // lastEntry may need to be derived from snapshot
+      SnapshotInfo snapshot = getLatestSnapshot();
+      if (snapshot != null) {
+        lastEntry = snapshot.getTermIndex();
+      }
+    }
+    return  lastEntry;
   }
 
   public long getLatestInstalledSnapshotIndex() {

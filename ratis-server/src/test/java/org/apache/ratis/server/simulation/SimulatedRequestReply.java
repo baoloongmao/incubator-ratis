@@ -133,7 +133,6 @@ class SimulatedRequestReply<REQUEST extends RaftRpcMessage, REPLY extends RaftRp
     REQUEST request;
     try {
       // delay request for testing
-      RaftTestUtil.delay(q.delayTakeRequestTo::get);
       while (true) {
         request = q.takeRequest();
         Preconditions.assertTrue(qid.equals(request.getReplierId()));
@@ -148,6 +147,7 @@ class SimulatedRequestReply<REQUEST extends RaftRpcMessage, REPLY extends RaftRp
         }
         break;
       }
+      RaftTestUtil.delay(q.delayTakeRequestTo::get);
     } catch (InterruptedException e) {
       throw IOUtils.toInterruptedIOException("", e);
     }
