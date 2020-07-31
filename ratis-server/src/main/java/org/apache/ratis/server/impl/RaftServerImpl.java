@@ -69,7 +69,6 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
   public static final Logger LOG = LoggerFactory.getLogger(RaftServerImpl.class);
 
   private static final String CLASS_NAME = RaftServerImpl.class.getSimpleName();
-  static final String PRE_REQUEST_VOTE = CLASS_NAME + ".preRequestVote";
   static final String REQUEST_VOTE = CLASS_NAME + ".requestVote";
   static final String APPEND_ENTRIES = CLASS_NAME + ".appendEntries";
   static final String INSTALL_SNAPSHOT = CLASS_NAME + ".installSnapshot";
@@ -951,7 +950,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
   private RequestVoteReplyProto preRequestVote(
       RaftPeerId candidateId, RaftGroupId candidateGroupId,
       long candidateTerm, TermIndex candidateLastEntry) throws IOException {
-    CodeInjectionForTesting.execute(PRE_REQUEST_VOTE, getId(),
+    CodeInjectionForTesting.execute(REQUEST_VOTE, getId(),
         candidateId, candidateTerm, candidateLastEntry);
     LOG.info("{}: receive preVote({}, {}, {}, {})",
         getMemberId(), candidateId, candidateGroupId, candidateTerm, candidateLastEntry);
