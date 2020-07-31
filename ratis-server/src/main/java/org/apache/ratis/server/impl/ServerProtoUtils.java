@@ -327,10 +327,11 @@ public interface ServerProtoUtils {
   }
 
   static RequestVoteRequestProto toRequestVoteRequestProto(
-      RaftGroupMemberId requestorId, RaftPeerId replyId, long term, TermIndex lastEntry) {
+      RaftGroupMemberId requestorId, RaftPeerId replyId, long term, TermIndex lastEntry, boolean preVote) {
     final RequestVoteRequestProto.Builder b = RequestVoteRequestProto.newBuilder()
         .setServerRequest(toRaftRpcRequestProtoBuilder(requestorId, replyId))
-        .setCandidateTerm(term);
+        .setCandidateTerm(term)
+        .setPreVote(preVote);
     if (lastEntry != null) {
       b.setCandidateLastEntry(toTermIndexProto(lastEntry));
     }

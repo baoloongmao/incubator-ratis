@@ -850,10 +850,62 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
   public RequestVoteReplyProto requestVote(RequestVoteRequestProto r)
       throws IOException {
     final RaftRpcRequestProto request = r.getServerRequest();
-    return requestVote(RaftPeerId.valueOf(request.getRequestorId()),
-        ProtoUtils.toRaftGroupId(request.getRaftGroupId()),
-        r.getCandidateTerm(),
-        ServerProtoUtils.toTermIndex(r.getCandidateLastEntry()));
+    if (r.getPreVote()) {
+      return requestPreVote(RaftPeerId.valueOf(request.getRequestorId()),
+          ProtoUtils.toRaftGroupId(request.getRaftGroupId()),
+          r.getCandidateTerm(),
+          ServerProtoUtils.toTermIndex(r.getCandidateLastEntry()));
+    } else {
+      return requestVote(RaftPeerId.valueOf(request.getRequestorId()),
+          ProtoUtils.toRaftGroupId(request.getRaftGroupId()),
+          r.getCandidateTerm(),
+          ServerProtoUtils.toTermIndex(r.getCandidateLastEntry()));
+    }
+  }
+
+  private RequestVoteReplyProto requestPreVote(
+      RaftPeerId candidateId, RaftGroupId candidateGroupId,
+      long candidateTerm, TermIndex candidateLastEntry) throws IOException {
+    CodeInjectionForTesting.execute(REQUEST_VOTE, getId(),
+        candidateId, candidateTerm, candidateLastEntry);
+    LOG.info("{}: receive preVote({}, {}, {}, {})",
+        getMemberId(), candidateId, candidateGroupId, candidateTerm, candidateLastEntry);
+    assertLifeCycleState(LifeCycle.States.RUNNING);
+    assertGroup(candidateId, candidateGroupId);
+
+    boolean preVoteGranted = false;
+    final RequestVoteReplyProto reply;
+    synchronized (this) {
+      boolean isCandidateLogUptoDate = state.isLogUpToDate(candidateLastEntry);
+      if (isCandidateLogUptoDate) {
+        preVoteGranted = true;
+        LOG.info("{} allow pre vote from:{} because this is:{} and isCandidateLogUptoDate:{}",
+            getMemberId(), getRole(), candidateId, isCandidateLogUptoDate);
+      } else {
+        LOG.info("{} reject pre vote from:{} because this is:{} but isCandidateLogUptoDate:{}",
+            getMemberId(), getRole(), candidateId, isCandidateLogUptoDate);
+      }
+
+      if (!preVoteGranted && !state.getRaftConf().contains(candidateId)) {
+        // allow pre vote so that leader election can process this case
+        preVoteGranted = true;
+        LOG.info("{} allow pre vote from:{} because this is:{} and candidate not in conf:{}",
+            getMemberId(), getRole(), candidateId, state.getRaftConf().toString());
+      }
+
+      if (preVoteGranted) {
+        final FollowerState fs = role.getFollowerState().orElse(null);
+        if (fs != null) {
+          fs.updateLastRpcTime(FollowerState.UpdateType.REQUEST_VOTE);
+        }
+      }
+
+      reply = ServerProtoUtils.toRequestVoteReplyProto(candidateId, getMemberId(),
+          preVoteGranted, state.getCurrentTerm(), false);
+      LOG.info("{} replies to pre vote request: {}. Peer's state: {}",
+          getMemberId(), ServerProtoUtils.toString(reply), state);
+    }
+    return reply;
   }
 
   private RequestVoteReplyProto requestVote(
@@ -1348,8 +1400,8 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
   }
 
   synchronized RequestVoteRequestProto createRequestVoteRequest(
-      RaftPeerId targetId, long term, TermIndex lastEntry) {
-    return ServerProtoUtils.toRequestVoteRequestProto(getMemberId(), targetId, term, lastEntry);
+      RaftPeerId targetId, long term, TermIndex lastEntry, boolean preVote) {
+    return ServerProtoUtils.toRequestVoteRequestProto(getMemberId(), targetId, term, lastEntry, preVote);
   }
 
   public void submitUpdateCommitEvent() {
