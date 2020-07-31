@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +53,7 @@ import static org.apache.ratis.server.metrics.LeaderElectionMetrics.LEADER_ELECT
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -234,6 +236,40 @@ public abstract class LeaderElectionTests<CLUSTER extends MiniRaftCluster>
       assertEquals(LifeCycle.State.CLOSED, subject.getCurrentState());
     } catch (Exception e) {
       LOG.info("Error starting LeaderElection", e);
+      fail(e.getMessage());
+    }
+  }
+
+  @Test
+  public void testPreVote() {
+    try(final MiniRaftCluster cluster = newCluster(3)) {
+      cluster.start();
+
+      RaftServerImpl leader = waitForLeader(cluster);
+      final long savedTerm = leader.getState().getCurrentTerm();
+
+      try (RaftClient client = cluster.createClient(leader.getId())) {
+        client.send(new RaftTestUtil.SimpleMessage("message"));
+
+        final List<RaftServerImpl> followers = cluster.getFollowers();
+        assertEquals(followers.size(), 2);
+
+        RaftServerImpl follower = followers.get(0);
+        System.err.println("wangjie start isolate:" + follower.getId());
+        isolate(cluster, follower.getId());
+        // wait follower timeout and trigger leader election
+        Thread.sleep(2000);
+        deIsolate(cluster, follower.getId());
+        // if without pre vote leader will step down
+        Thread.sleep(2000);
+        leader = waitForLeader(cluster);
+        assertNotNull(leader);
+        // if without pre vote, term will not equal
+        assertEquals(leader.getState().getCurrentTerm(), savedTerm);
+      }
+
+      cluster.shutdown();
+    } catch (Exception e) {
       fail(e.getMessage());
     }
   }

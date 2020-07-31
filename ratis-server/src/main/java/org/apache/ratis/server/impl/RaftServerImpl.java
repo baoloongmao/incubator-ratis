@@ -46,6 +46,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -68,6 +69,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
   public static final Logger LOG = LoggerFactory.getLogger(RaftServerImpl.class);
 
   private static final String CLASS_NAME = RaftServerImpl.class.getSimpleName();
+  static final String PRE_REQUEST_VOTE = CLASS_NAME + ".preRequestVote";
   static final String REQUEST_VOTE = CLASS_NAME + ".requestVote";
   static final String APPEND_ENTRIES = CLASS_NAME + ".appendEntries";
   static final String INSTALL_SNAPSHOT = CLASS_NAME + ".installSnapshot";
@@ -453,6 +455,120 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
     leaderElectionMetrics.onNewLeaderElection();
   }
 
+  synchronized PreVoteResult preVote() throws InterruptedException {
+    final RaftConfiguration conf = state.getRaftConf();
+    final Collection<RaftPeer> others = conf.getOtherPeers(this.getId());
+
+    if (others.isEmpty()) {
+      return PreVoteResult.PASSED;
+    } else {
+      final LeaderElection.Executor voteExecutor =
+          new LeaderElection.Executor(this, others.size());
+      try {
+        final int submitted = submitPreVoteRequests(others, voteExecutor);
+        return waitPreVoteResults(submitted, conf, voteExecutor);
+      } finally {
+        voteExecutor.shutdown();
+      }
+    }
+  }
+
+  private int submitPreVoteRequests(
+      Collection<RaftPeer> others, LeaderElection.Executor voteExecutor) {
+    final TermIndex lastEntry = state.getLastEntry();
+    int submitted = 0;
+
+    for (final RaftPeer peer : others) {
+      final RequestVoteRequestProto r = createRequestVoteRequest(
+          peer.getId(), state.getCurrentTerm() + 1, lastEntry, true);
+      voteExecutor.submit(() -> getServerRpc().requestVote(r));
+      submitted++;
+    }
+
+    return submitted;
+  }
+
+  enum PreVoteResult {PASSED, REJECTED, TIMEOUT, DISCOVERED_A_NEW_TERM, NOT_FOLLOWER, SHUTDOWN}
+
+  private void logPreVote(PreVoteResult result, Map<RaftPeerId, RequestVoteReplyProto> responses,
+      List<Exception> exceptions) {
+    LOG.info(this + ": pre vote " + result + "; received " + responses.size() + " response(s) "
+        + responses.values().stream().map(ServerProtoUtils::toString).collect(Collectors.toList())
+        + " and " + exceptions.size() + " exception(s); " + getState());
+    int i = 0;
+    for(Exception e : exceptions) {
+      final int j = i++;
+      LogUtils.infoOrTrace(LOG, () -> "  Exception " + j, e);
+    }
+  }
+
+  private PreVoteResult waitPreVoteResults(final int submitted,
+      RaftConfiguration conf, LeaderElection.Executor voteExecutor) throws InterruptedException {
+    final Timestamp timeout = Timestamp.currentTime().addTimeMs(getRandomTimeoutMs());
+    final Map<RaftPeerId, RequestVoteReplyProto> responses = new HashMap<>();
+    final List<Exception> exceptions = new ArrayList<>();
+    int waitForNum = submitted;
+    Collection<RaftPeerId> votedPeers = new ArrayList<>();
+
+    while (waitForNum > 0) {
+      if (!isFollower()) {
+        logPreVote(PreVoteResult.NOT_FOLLOWER, responses, exceptions);
+        return PreVoteResult.NOT_FOLLOWER;
+      }
+
+      final TimeDuration waitTime = timeout.elapsedTime().apply(n -> -n);
+      if (waitTime.isNonPositive()) {
+        logPreVote(PreVoteResult.TIMEOUT, responses, exceptions);
+        return PreVoteResult.TIMEOUT;
+      }
+
+      try {
+        final Future<RequestVoteReplyProto> future = voteExecutor.poll(waitTime);
+        if (future == null) {
+          continue;
+        }
+
+        final RequestVoteReplyProto r = future.get();
+        final RaftPeerId replierId = RaftPeerId.valueOf(r.getServerReply().getReplyId());
+        final RequestVoteReplyProto previous = responses.putIfAbsent(replierId, r);
+        if (previous != null) {
+          if (LOG.isWarnEnabled()) {
+            LOG.warn("{} received duplicated replies from {}, the 2nd reply is ignored: 1st={}, 2nd={}",
+                this, replierId, ServerProtoUtils.toString(previous), ServerProtoUtils.toString(r));
+          }
+          continue;
+        }
+
+        if (r.getShouldShutdown()) {
+          logPreVote(PreVoteResult.SHUTDOWN, responses, exceptions);
+          return PreVoteResult.SHUTDOWN;
+        }
+
+        if (r.getTerm() > state.getCurrentTerm()) {
+          logPreVote(PreVoteResult.DISCOVERED_A_NEW_TERM, responses, exceptions);
+          return PreVoteResult.DISCOVERED_A_NEW_TERM;
+        }
+
+        if (r.getServerReply().getSuccess()) {
+          votedPeers.add(replierId);
+
+          if (conf.hasMajority(votedPeers, getId())) {
+            logPreVote(PreVoteResult.PASSED, responses, exceptions);
+            return PreVoteResult.PASSED;
+          }
+        }
+      } catch(ExecutionException e) {
+        LogUtils.infoOrTrace(LOG, () -> this + " got exception when pre requesting votes", e);
+        exceptions.add(e);
+      }
+      waitForNum--;
+    }
+
+    logPreVote(PreVoteResult.REJECTED, responses, exceptions);
+    return PreVoteResult.REJECTED;
+  }
+
+
   @Override
   public String toString() {
     return role + " " + state + " " + lifeCycle.getCurrentState();
@@ -819,10 +935,65 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
   public RequestVoteReplyProto requestVote(RequestVoteRequestProto r)
       throws IOException {
     final RaftRpcRequestProto request = r.getServerRequest();
-    return requestVote(RaftPeerId.valueOf(request.getRequestorId()),
-        ProtoUtils.toRaftGroupId(request.getRaftGroupId()),
-        r.getCandidateTerm(),
-        ServerProtoUtils.toTermIndex(r.getCandidateLastEntry()));
+    if (r.getPreVote()) {
+      return preRequestVote(RaftPeerId.valueOf(request.getRequestorId()),
+          ProtoUtils.toRaftGroupId(request.getRaftGroupId()),
+          r.getCandidateTerm(),
+          ServerProtoUtils.toTermIndex(r.getCandidateLastEntry()));
+    } else {
+      return requestVote(RaftPeerId.valueOf(request.getRequestorId()),
+          ProtoUtils.toRaftGroupId(request.getRaftGroupId()),
+          r.getCandidateTerm(),
+          ServerProtoUtils.toTermIndex(r.getCandidateLastEntry()));
+    }
+  }
+
+  private RequestVoteReplyProto preRequestVote(
+      RaftPeerId candidateId, RaftGroupId candidateGroupId,
+      long candidateTerm, TermIndex candidateLastEntry) throws IOException {
+    CodeInjectionForTesting.execute(PRE_REQUEST_VOTE, getId(),
+        candidateId, candidateTerm, candidateLastEntry);
+    LOG.info("{}: receive preVote({}, {}, {}, {})",
+        getMemberId(), candidateId, candidateGroupId, candidateTerm, candidateLastEntry);
+    assertLifeCycleState(LifeCycle.States.RUNNING);
+    assertGroup(candidateId, candidateGroupId);
+
+    boolean preVoteGranted = false;
+    boolean shouldShutdown = false;
+    final RequestVoteReplyProto reply;
+    synchronized (this) {
+      if (candidateTerm < state.getCurrentTerm()) {
+        LOG.debug("{} reject pre vote from:{} candidateTerm: {} less than currentTerm: {}",
+            getMemberId(), candidateId, candidateTerm, state.getCurrentTerm());
+      } else if (isLeader()) {
+        LOG.info("{} reject pre vote from:{} because this is leader", getMemberId(), candidateId);
+      } else if (isFollower() && state.hasLeader()
+          && role.getFollowerState().map(FollowerState::shouldWithholdVotes).orElse(false)) {
+        // following a leader and not yet timeout
+        LOG.info("{} reject pre vote from:{} because this is follower which has not timeout",
+            getMemberId(), candidateId);
+      } else {
+        final FollowerState fs = role.getFollowerState().orElse(null);
+        if (state.isLogUpToDate(candidateLastEntry) && fs != null) {
+          preVoteGranted = true;
+        }
+      }
+
+      if (preVoteGranted) {
+        final FollowerState fs = role.getFollowerState().orElse(null);
+        if (fs != null) {
+          fs.updateLastRpcTime(FollowerState.UpdateType.REQUEST_VOTE);
+        }
+      } else if(shouldSendShutdown(candidateId, candidateLastEntry)) {
+        shouldShutdown = true;
+      }
+
+      reply = ServerProtoUtils.toRequestVoteReplyProto(candidateId, getMemberId(),
+          preVoteGranted, state.getCurrentTerm(), shouldShutdown);
+      LOG.info("{} replies to pre vote request: {}. Peer's state: {}",
+          getMemberId(), ServerProtoUtils.toString(reply), state);
+    }
+    return reply;
   }
 
   private RequestVoteReplyProto requestVote(
@@ -1307,8 +1478,8 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
   }
 
   synchronized RequestVoteRequestProto createRequestVoteRequest(
-      RaftPeerId targetId, long term, TermIndex lastEntry) {
-    return ServerProtoUtils.toRequestVoteRequestProto(getMemberId(), targetId, term, lastEntry);
+      RaftPeerId targetId, long term, TermIndex lastEntry, boolean preVote) {
+    return ServerProtoUtils.toRequestVoteRequestProto(getMemberId(), targetId, term, lastEntry, preVote);
   }
 
   public void submitUpdateCommitEvent() {

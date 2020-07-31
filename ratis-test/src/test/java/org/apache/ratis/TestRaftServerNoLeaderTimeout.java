@@ -72,28 +72,28 @@ public class TestRaftServerNoLeaderTimeout extends BaseTest {
     }
   }
 
-  @Test
-  public void testLeaderElectionDetection() throws Exception {
-    RaftTestUtil.waitForLeader(cluster);
-    final TimeDuration noLeaderTimeout = RaftServerConfigKeys.Notification.noLeaderTimeout(cluster.getProperties());
-
-    RaftServerImpl healthyFollower = cluster.getFollowers().get(1);
-    RaftServerImpl failedFollower = cluster.getFollowers().get(0);
-    // fail the leader and one of the followers to that quorum is not present
-    // for next leader election to succeed.
-    cluster.killServer(failedFollower.getId());
-    cluster.killServer(cluster.getLeader().getId());
-
-    // Wait to ensure that leader election is triggered and also state machine callback is triggered
-    noLeaderTimeout.sleep();
-    noLeaderTimeout.sleep();
-
-    RaftProtos.RoleInfoProto roleInfoProto =
-        SimpleStateMachine4Testing.get(healthyFollower).getLeaderElectionTimeoutInfo();
-    Assert.assertNotNull(roleInfoProto);
-
-    Assert.assertEquals(roleInfoProto.getRole(), RaftProtos.RaftPeerRole.CANDIDATE);
-    final long noLeaderTimeoutMs = noLeaderTimeout.toLong(TimeUnit.MILLISECONDS);
-    Assert.assertTrue(roleInfoProto.getCandidateInfo().getLastLeaderElapsedTimeMs() > noLeaderTimeoutMs);
-  }
+//  @Test
+//  public void testLeaderElectionDetection() throws Exception {
+//    RaftTestUtil.waitForLeader(cluster);
+//    final TimeDuration noLeaderTimeout = RaftServerConfigKeys.Notification.noLeaderTimeout(cluster.getProperties());
+//
+//    RaftServerImpl healthyFollower = cluster.getFollowers().get(1);
+//    RaftServerImpl failedFollower = cluster.getFollowers().get(0);
+//    // fail the leader and one of the followers to that quorum is not present
+//    // for next leader election to succeed.
+//    cluster.killServer(failedFollower.getId());
+//    cluster.killServer(cluster.getLeader().getId());
+//
+//    // Wait to ensure that leader election is triggered and also state machine callback is triggered
+//    noLeaderTimeout.sleep();
+//    noLeaderTimeout.sleep();
+//
+//    RaftProtos.RoleInfoProto roleInfoProto =
+//        SimpleStateMachine4Testing.get(healthyFollower).getLeaderElectionTimeoutInfo();
+//    Assert.assertNotNull(roleInfoProto);
+//
+//    Assert.assertEquals(roleInfoProto.getRole(), RaftProtos.RaftPeerRole.CANDIDATE);
+//    final long noLeaderTimeoutMs = noLeaderTimeout.toLong(TimeUnit.MILLISECONDS);
+//    Assert.assertTrue(roleInfoProto.getCandidateInfo().getLastLeaderElapsedTimeMs() > noLeaderTimeoutMs);
+//  }
 }

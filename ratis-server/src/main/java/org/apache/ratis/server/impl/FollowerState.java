@@ -105,12 +105,22 @@ class FollowerState extends Daemon {
         }
         synchronized (server) {
           if (outstandingOp.get() == 0 && lastRpcTime.elapsedTimeMs() >= electionTimeout) {
-            LOG.info("{}: change to CANDIDATE, lastRpcTime:{}ms, electionTimeout:{}ms",
-                this, lastRpcTime.elapsedTimeMs(), electionTimeout);
             server.getLeaderElectionMetrics().onLeaderElectionTimeout(); // Update timeout metric counters.
-            // election timeout, should become a candidate
-            server.changeToCandidate();
-            break;
+            RaftServerImpl.PreVoteResult result = server.preVote();
+            if (result == RaftServerImpl.PreVoteResult.PASSED) {
+              // election timeout, should become a candidate
+              LOG.info("{}: pass pre vote and change to CANDIDATE, lastRpcTime:{}ms, electionTimeout:{}ms",
+                  this, lastRpcTime.elapsedTimeMs(), electionTimeout);
+              server.changeToCandidate();
+              break;
+            } else if (result == RaftServerImpl.PreVoteResult.SHUTDOWN) {
+              LOG.info("{} received shutdown response when requesting pre votes.", this);
+              server.getProxy().close();
+              break;
+            } else {
+              LOG.info("{}: can not pass pre vote, lastRpcTime:{}ms, electionTimeout:{}ms",
+                  this, lastRpcTime.elapsedTimeMs(), electionTimeout);
+            }
           }
         }
       } catch (InterruptedException e) {
