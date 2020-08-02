@@ -72,14 +72,12 @@ public class TestClientProtoUtils extends BaseTest {
 
     }
 
-    System.out.printf("%nmessageSize=%s, n=%d%n", messageSize, n);
     print("toProto  ", toProto, n);
     print("toRequest", toRequest, n);
   }
 
   void print(String name, TimeDuration t, int n) {
     final long ns = t.toLong(TimeUnit.NANOSECONDS);
-    System.out.printf("%s: avg = %s (total = %s)%n", name, ns2String(ns/n), ns2String(ns));
   }
 
   static String ns2String(long ns) {

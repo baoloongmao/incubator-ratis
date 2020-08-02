@@ -30,7 +30,6 @@ public final class DefaultLogDump {
 
   public static void main(String[] args) throws Exception {
     String filePath = args[0];
-    System.out.println("file path is " + filePath);
     File logFile = new File(filePath);
 
     ParseRatisLog.Builder builder =  new ParseRatisLog.Builder();

@@ -239,8 +239,6 @@ public abstract class GroupManagementBaseTest extends BaseTest {
   }
 
   static void printThreadCount(String type, String label) {
-    System.out.println("| " + type + " | " + label + " | "
-        + JavaUtils.getRootThreadGroup().activeCount() + " |");
   }
 
   @Test
