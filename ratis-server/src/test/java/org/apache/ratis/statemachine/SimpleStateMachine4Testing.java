@@ -221,8 +221,23 @@ public class SimpleStateMachine4Testing extends BaseStateMachine {
     });
   }
 
+  public void printCallStatck(String str) {
+    Throwable ex = new Throwable();
+    StackTraceElement[] stackElements = ex.getStackTrace();
+    if (stackElements != null) {
+      for (int i = 0; i < stackElements.length; i++) {
+        System.err.println(str + ": "
+            + stackElements[i].getClassName()+ "|"
+            + stackElements[i].getFileName()+"|"
+            + stackElements[i].getLineNumber()+"|"
+            + stackElements[i].getMethodName());
+      }
+    }
+  }
+
   @Override
   public synchronized void pause() {
+    printCallStatck("pause this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
     getLifeCycle().transition(LifeCycle.State.PAUSING);
     getLifeCycle().transition(LifeCycle.State.PAUSED);
   }
