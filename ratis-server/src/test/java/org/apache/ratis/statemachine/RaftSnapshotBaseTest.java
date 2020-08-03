@@ -45,6 +45,7 @@ import org.apache.ratis.proto.RaftProtos.LogEntryProto;
 import org.apache.ratis.statemachine.impl.SimpleStateMachineStorage;
 import org.apache.ratis.util.FileUtils;
 import org.apache.ratis.util.JavaUtils;
+import org.apache.ratis.util.LifeCycle;
 import org.apache.ratis.util.Log4jUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -132,42 +133,6 @@ public abstract class RaftSnapshotBaseTest extends BaseTest {
     }
   }
 
-  /**
-   * Keep generating writing traffic and make sure snapshots are taken.
-   * We then restart the whole raft peer and check if it can correctly load
-   * snapshots + raft log.
-   */
-  @Test
-  public void testRestartPeer() throws Exception {
-    RaftTestUtil.waitForLeader(cluster);
-    final RaftPeerId leaderId = cluster.getLeader().getId();
-    int i = 0;
-    try(final RaftClient client = cluster.createClient(leaderId)) {
-      for (; i < SNAPSHOT_TRIGGER_THRESHOLD * 2 - 1; i++) {
-        RaftClientReply reply = client.send(new SimpleMessage("m" + i));
-        Assert.assertTrue(reply.isSuccess());
-      }
-    }
-
-    final long nextIndex = cluster.getLeader().getState().getLog().getNextIndex();
-    LOG.info("nextIndex = {}", nextIndex);
-    // wait for the snapshot to be done
-    final List<File> snapshotFiles = getSnapshotFiles(cluster, nextIndex - SNAPSHOT_TRIGGER_THRESHOLD, nextIndex);
-    JavaUtils.attemptRepeatedly(() -> {
-      Assert.assertTrue(snapshotFiles.stream().anyMatch(RaftSnapshotBaseTest::exists));
-      return null;
-    }, 10, ONE_SECOND, "snapshotFile.exist", LOG);
-
-    // restart the peer and check if it can correctly load snapshot
-    cluster.restart(false);
-    try {
-      // 200 messages + two leader elections --> last committed = 201
-      assertLeaderContent(cluster);
-    } finally {
-      cluster.shutdown();
-    }
-  }
-
   public static boolean exists(File f) {
     if (f.exists()) {
       LOG.info("File exists: " + f);
@@ -230,10 +195,17 @@ public abstract class RaftSnapshotBaseTest extends BaseTest {
       }
 
       // add two more peers
+      String[] newPeers = new String[]{"s3", "s4"};
       MiniRaftCluster.PeerChanges change = cluster.addNewPeers(
-          new String[]{"s3", "s4"}, true);
+          newPeers, true);
       // trigger setConfiguration
       cluster.setConfiguration(change.allPeersInNewConf);
+
+      for (String newPeer : newPeers) {
+        RaftServerImpl s3 = cluster.getRaftServerImpl(RaftPeerId.valueOf(newPeer));
+        SimpleStateMachine4Testing simpleStateMachine = SimpleStateMachine4Testing.get(s3);
+        Assert.assertTrue(simpleStateMachine.getLifeCycleState() == LifeCycle.State.RUNNING);
+      }
 
       // Verify installSnapshot counter on leader before restart.
       verifyInstallSnapshotMetric(cluster.getLeader());

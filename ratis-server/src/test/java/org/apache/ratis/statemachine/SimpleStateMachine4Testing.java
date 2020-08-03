@@ -248,6 +248,11 @@ public class SimpleStateMachine4Testing extends BaseStateMachine {
   public synchronized void reinitialize() throws IOException {
     LOG.info("wangjie Reinitializing " + this);
     loadSnapshot(storage.findLatestSnapshot());
+    if (getLifeCycleState() != LifeCycle.State.RUNNING) {
+      getLifeCycle().transition(LifeCycle.State.STARTING);
+      getLifeCycle().transition(LifeCycle.State.RUNNING);
+    }
+    System.err.println("wangjie reinitialize after state:" + getLifeCycleState());
   }
 
   @Override
