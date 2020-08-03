@@ -202,7 +202,7 @@ public class SimpleStateMachine4Testing extends BaseStateMachine {
   @Override
   public synchronized void initialize(RaftServer server, RaftGroupId groupId,
       RaftStorage raftStorage) throws IOException {
-    LOG.info("Initializing " + this);
+    LOG.info("wangjie Initializing " + this);
     this.groupId = groupId;
     getLifeCycle().startAndTransition(() -> {
       super.initialize(server, groupId, raftStorage);
@@ -217,12 +217,18 @@ public class SimpleStateMachine4Testing extends BaseStateMachine {
     });
   }
 
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + ":"
+        + this.hashCode();
+  }
+
   public void printCallStatck(String str) {
     Throwable ex = new Throwable();
     StackTraceElement[] stackElements = ex.getStackTrace();
     if (stackElements != null) {
       for (int i = 0; i < stackElements.length; i++) {
-        System.err.println(str + ": "
+        LOG.info(str + ": "
             + stackElements[i].getClassName()+ "|"
             + stackElements[i].getFileName()+"|"
             + stackElements[i].getLineNumber()+"|"
@@ -233,14 +239,14 @@ public class SimpleStateMachine4Testing extends BaseStateMachine {
 
   @Override
   public synchronized void pause() {
-    printCallStatck("pause this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
+    printCallStatck("wangjie pause this:" + this.hashCode() + " thread:" + Thread.currentThread().getId());
     getLifeCycle().transition(LifeCycle.State.PAUSING);
     getLifeCycle().transition(LifeCycle.State.PAUSED);
   }
 
   @Override
   public synchronized void reinitialize() throws IOException {
-    LOG.info("Reinitializing " + this);
+    LOG.info("wangjie Reinitializing " + this);
     loadSnapshot(storage.findLatestSnapshot());
   }
 

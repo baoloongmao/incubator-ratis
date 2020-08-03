@@ -1125,7 +1125,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
       throw t;
     }
     if (LOG.isInfoEnabled()) {
-      LOG.info("{}: reply installSnapshot: {}", getMemberId(), ServerProtoUtils.toString(reply));
+      LOG.info("wangjie {}: reply installSnapshot: {} this:{}", getMemberId(), ServerProtoUtils.toString(reply), this.hashCode());
     }
     return reply;
   }
@@ -1196,6 +1196,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
         // update the committed index
         // re-load the state machine if this is the last chunk
         if (snapshotChunkRequest.getDone()) {
+          LOG.info("wangjie finish installSnapshot this:" + this.hashCode());
           state.reloadStateMachine(lastIncludedIndex);
         }
       } finally {
