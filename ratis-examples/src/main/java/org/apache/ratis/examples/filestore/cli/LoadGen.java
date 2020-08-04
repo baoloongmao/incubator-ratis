@@ -76,6 +76,7 @@ public class LoadGen extends Client {
       Long writtenLen = future.join();
       totalBytes.addAndGet(writtenLen);
       if (writtenLen != length) {
+        startTime = System.currentTimeMillis();
       }
     }
     long endTime = System.currentTimeMillis();

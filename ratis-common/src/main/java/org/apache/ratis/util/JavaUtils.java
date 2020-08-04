@@ -22,9 +22,6 @@ import org.apache.ratis.util.function.CheckedSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadInfo;
-import java.lang.management.ThreadMXBean;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
