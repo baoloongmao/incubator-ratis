@@ -256,6 +256,9 @@ public abstract class LeaderElectionTests<CLUSTER extends MiniRaftCluster>
 
         RaftServerImpl follower = followers.get(0);
         isolate(cluster, follower.getId());
+        // send message so that the isolated follower's log lag the others
+        client.send(new RaftTestUtil.SimpleMessage("message"));
+
         // wait follower timeout and trigger pre vote
         Thread.sleep(2000);
         deIsolate(cluster, follower.getId());

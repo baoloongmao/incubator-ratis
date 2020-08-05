@@ -253,7 +253,11 @@ class LeaderElection implements Runnable {
             return true;
           case SHUTDOWN:
             LOG.info("{} received shutdown response when requesting votes.", this);
-            server.getProxy().close();
+            if (!preVote) {
+              server.getProxy().close();
+            } else {
+              LOG.error("{} should not happen SHUTDOWN when requesting pre votes.", this);
+            }
             return false;
           case REJECTED:
             long term = preVote ? state.getCurrentTerm() : Math.max(r.term, state.getCurrentTerm());

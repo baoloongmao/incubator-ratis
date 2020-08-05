@@ -843,37 +843,23 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
     assertGroup(candidateId, candidateGroupId);
 
     boolean preVoteGranted = false;
-    boolean shouldShutdown = false;
     final RequestVoteReplyProto reply;
     synchronized (this) {
-      if (isLeader()) {
-        if(shouldSendShutdown(candidateId, candidateLastEntry)) {
-          shouldShutdown = true;
-        } else {
-          LOG.info("{} reject pre vote from:{} because this is leader", getMemberId(), candidateId);
-        }
-      } else if (isFollower()) {
-        boolean isCandidateLogUptoDate = state.isLogUpToDate(candidateLastEntry);
-        boolean isCurrentLeaderValid = state.hasLeader()
-            && role.getFollowerState().map(FollowerState::isCurrentLeaderValid).orElse(false);
+      boolean isCandidateLogUptoDate = state.isLogUpToDate(candidateLastEntry);
+      if (isCandidateLogUptoDate) {
+        preVoteGranted = true;
+        LOG.info("{} allow pre vote from:{} because this is:{} and isCandidateLogUptoDate:{}",
+            getMemberId(), getRole(), candidateId, isCandidateLogUptoDate);
+      } else {
+        LOG.info("{} reject pre vote from:{} because this is:{} but isCandidateLogUptoDate:{}",
+            getMemberId(), getRole(), candidateId, isCandidateLogUptoDate);
+      }
 
-        if (isCandidateLogUptoDate && !isCurrentLeaderValid) {
-          preVoteGranted = true;
-        } else {
-          LOG.info("{} reject pre vote from:{} because this is follower but " +
-              "isCandidateLogUptoDate:{} isCurrentLeaderValid:{}",
-              getMemberId(), candidateId, isCandidateLogUptoDate, isCurrentLeaderValid);
-        }
-      } else if (isCandidate()) {
-        boolean isCandidateLogUptoDate = state.isLogUpToDate(candidateLastEntry);
-
-        if (isCandidateLogUptoDate) {
-          preVoteGranted = true;
-        } else {
-          LOG.info("{} reject pre vote from:{} because this is candidate but " +
-              "isCandidateLogUptoDate:{}",
-              getMemberId(), candidateId, isCandidateLogUptoDate);
-        }
+      if (!preVoteGranted && !state.getRaftConf().contains(candidateId)) {
+        // allow pre vote so that leader election can process this case
+        preVoteGranted = true;
+        LOG.info("{} allow pre vote from:{} because this is:{} and candidate not in conf:{}",
+            getMemberId(), getRole(), candidateId, state.getRaftConf().toString());
       }
 
       if (preVoteGranted) {
@@ -884,7 +870,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
       }
 
       reply = ServerProtoUtils.toRequestVoteReplyProto(candidateId, getMemberId(),
-          preVoteGranted, state.getCurrentTerm(), shouldShutdown);
+          preVoteGranted, state.getCurrentTerm(), false);
       LOG.info("{} replies to pre vote request: {}. Peer's state: {}",
           getMemberId(), ServerProtoUtils.toString(reply), state);
     }
