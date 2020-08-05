@@ -50,6 +50,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.Objects;
 
@@ -132,17 +137,47 @@ public final class NettyRpcService extends RaftServerRpcWithProxy<NettyRpcProxy,
     return channelFuture.awaitUninterruptibly().channel();
   }
 
+  private static Map<Integer, String> rpcMap = new ConcurrentHashMap<>();
+
+  public String getCallStatck() {
+    Throwable ex = new Throwable();
+    StackTraceElement[] stackElements = ex.getStackTrace();
+    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+    String formatStr =formatter.format(new Date());
+    String stack = "create time:" + formatStr + "\n";
+
+    if (stackElements != null) {
+      for (int i = 0; i < stackElements.length; i++) {
+        stack +=
+            stackElements[i].getClassName()+ "|"
+            + stackElements[i].getFileName()+"|"
+            + stackElements[i].getLineNumber()+"|"
+            + stackElements[i].getMethodName() + "\n";
+      }
+    }
+    return stack;
+  }
+
   @Override
   public void startImpl() throws IOException {
     try {
       channelFuture.syncUninterruptibly();
+      rpcMap.putIfAbsent(this.hashCode(), getCallStatck());
     } catch(Throwable t) {
+      System.err.println("wangjie left rpcMap size:" + rpcMap.size());
+      Iterator<Map.Entry<Integer, String>> entries = rpcMap.entrySet().iterator();
+      while (entries.hasNext()) {
+        Map.Entry<Integer, String> entry = entries.next();
+        System.err.println("wangjie left rpc:" + entry.getKey() + "\n" + entry.getValue());
+      }
+
       throw new IOException(getId() + ": Failed to start " + getClass().getSimpleName(), t);
     }
   }
 
   @Override
   public void closeImpl() throws IOException {
+    rpcMap.remove(this.hashCode());
     final ChannelFuture f = getChannel().close();
     f.syncUninterruptibly();
     bossGroup.shutdownGracefully(0, 100, TimeUnit.MILLISECONDS);
