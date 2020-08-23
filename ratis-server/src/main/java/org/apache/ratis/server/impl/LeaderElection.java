@@ -46,6 +46,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.apache.ratis.util.LifeCycle.State.NEW;
@@ -269,6 +271,19 @@ class LeaderElection implements Runnable {
     return submitted;
   }
 
+  private Set<RaftPeerId> getHigherPriorityPeers(RaftConfiguration conf, int priority) {
+    Set<RaftPeerId> higherPriorityPeers = new HashSet<>();
+
+    Collection<RaftPeer> peers = conf.getPeers();
+    for (RaftPeer peer : peers) {
+      if (peer.getPriority() > priority) {
+        higherPriorityPeers.add(peer.getId());
+      }
+    }
+
+    return higherPriorityPeers;
+  }
+
   private ResultAndTerm waitForResults(final long electionTerm, final int submitted,
       RaftConfiguration conf, Executor voteExecutor) throws InterruptedException {
     final Timestamp timeout = Timestamp.currentTime().addTimeMs(server.getRandomTimeoutMs());
@@ -276,6 +291,8 @@ class LeaderElection implements Runnable {
     final List<Exception> exceptions = new ArrayList<>();
     int waitForNum = submitted;
     Collection<RaftPeerId> votedPeers = new ArrayList<>();
+    Set<RaftPeerId> higherPriorityPeers = getHigherPriorityPeers(conf, server.getPriority());
+
     while (waitForNum > 0 && shouldRun(electionTerm)) {
       final TimeDuration waitTime = timeout.elapsedTime().apply(n -> -n);
       if (waitTime.isNonPositive()) {
@@ -305,9 +322,16 @@ class LeaderElection implements Runnable {
           return logAndReturn(Result.DISCOVERED_A_NEW_TERM, responses,
               exceptions, r.getTerm());
         }
+
+        if (!r.getServerReply().getSuccess() && higherPriorityPeers.contains(replierId)) {
+          return logAndReturn(Result.REJECTED, responses, exceptions, -1);
+        }
+
+        higherPriorityPeers.remove(replierId);
+
         if (r.getServerReply().getSuccess()) {
           votedPeers.add(replierId);
-          if (conf.hasMajority(votedPeers, server.getId())) {
+          if (higherPriorityPeers.size() == 0 && conf.hasMajority(votedPeers, server.getId())) {
             return logAndReturn(Result.PASSED, responses, exceptions, -1);
           }
         }

@@ -318,19 +318,19 @@ public class ServerState implements Closeable {
     return false;
   }
 
-  boolean isLogUpToDate(TermIndex candidateLastEntry) {
+  int compareLog(TermIndex candidateLastEntry) {
     TermIndex local = log.getLastEntryTermIndex();
     // need to take into account snapshot
     SnapshotInfo snapshot = server.getStateMachine().getLatestSnapshot();
-     if (local == null && snapshot == null) {
-      return true;
+    if (local == null && snapshot == null) {
+      return -1;
     } else if (candidateLastEntry == null) {
-      return false;
+      return 1;
     }
     if (local == null || (snapshot != null && snapshot.getIndex() > local.getIndex())) {
       local = snapshot.getTermIndex();
     }
-    return local.compareTo(candidateLastEntry) <= 0;
+    return local.compareTo(candidateLastEntry);
   }
 
   @Override

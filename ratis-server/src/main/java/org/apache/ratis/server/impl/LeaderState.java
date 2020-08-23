@@ -800,6 +800,25 @@ public class LeaderState {
    * round of heartbeats to a majority of its cluster.
    */
   private void checkLeadership() {
+    int leaderPriority = server.getPriority();
+    for (LogAppender logAppender : senders.getSenders()) {
+      FollowerInfo followerInfo = logAppender.getFollower();
+      RaftPeer peer = followerInfo.getPeer();
+      int followerPriority = peer.getPriority();
+      if (followerPriority <= leaderPriority) {
+        continue;
+      }
+
+      if (followerInfo.getCommitIndex() >= raftLog.getLastCommittedIndex()) {
+        LOG.info("{} stepDown leadership on term:{} because follower's priority:{} is higher than leader's:{} " +
+            "and follower's log index:{} catch up with leader's:{}", this, currentTerm, followerPriority,
+            leaderPriority, followerInfo.getCommitIndex(), raftLog.getLastCommittedIndex());
+        // step down as follower
+        stepDown(currentTerm);
+        return;
+      }
+    }
+
     // The initial value of lastRpcResponseTime in FollowerInfo is set by
     // LeaderState::addSenders(), which is fake and used to trigger an
     // immediate round of AppendEntries request. Since candidates collect

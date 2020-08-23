@@ -84,7 +84,7 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
   private final LifeCycle lifeCycle;
   private final ServerState state;
   private final Supplier<RaftPeer> peerSupplier = JavaUtils.memoize(() ->
-      new RaftPeer(getId(), getServerRpc().getInetSocketAddress()));
+      new RaftPeer(getId(), getServerRpc().getInetSocketAddress(), getPriority()));
   private final RoleInfo role;
 
   private final RetryCache retryCache;
@@ -245,6 +245,10 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
 
   public RaftPeerId getId() {
     return getMemberId().getPeerId();
+  }
+
+  public int getPriority() {
+    return state.getRaftConf().getPeer(getId()).getPriority();
   }
 
   RoleInfo getRole() {
@@ -878,9 +882,14 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
       } else if (state.recognizeCandidate(candidateId, candidateTerm)) {
         final boolean termUpdated = changeToFollower(candidateTerm, true, "recognizeCandidate:" + candidateId);
         // see Section 5.4.1 Election restriction
-        if (state.isLogUpToDate(candidateLastEntry) && fs != null) {
-          state.grantVote(candidateId);
-          voteGranted = true;
+        RaftPeer candidate = getRaftConf().getPeer(candidateId);
+        if (fs != null && candidate != null) {
+          int compare = state.compareLog(candidateLastEntry);
+          int priority = getPriority();
+          if (compare < 0 || (compare == 0 && priority <= candidate.getPriority())) {
+            state.grantVote(candidateId);
+            voteGranted = true;
+          }
         }
         if (termUpdated || voteGranted) {
           state.persistMetadata(); // sync metafile
