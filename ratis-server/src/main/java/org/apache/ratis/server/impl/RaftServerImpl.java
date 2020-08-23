@@ -878,9 +878,13 @@ public class RaftServerImpl implements RaftServerProtocol, RaftServerAsynchronou
       } else if (state.recognizeCandidate(candidateId, candidateTerm)) {
         final boolean termUpdated = changeToFollower(candidateTerm, true, "recognizeCandidate:" + candidateId);
         // see Section 5.4.1 Election restriction
-        if (state.isLogUpToDate(candidateLastEntry) && fs != null) {
-          state.grantVote(candidateId);
-          voteGranted = true;
+        RaftPeer candidate = getRaftConf().getPeer(candidateId);
+        if (fs != null && candidate != null) {
+          int compare = state.compareLog(candidateLastEntry);
+          if (compare < 0 || (compare == 0 && getPeer().getPriority() == candidate.getPriority())) {
+            state.grantVote(candidateId);
+            voteGranted = true;
+          }
         }
         if (termUpdated || voteGranted) {
           state.persistMetadata(); // sync metafile
